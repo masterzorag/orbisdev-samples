@@ -36,5 +36,6 @@ jobs:
     
     - uses: actions/upload-artifact@v2
       with:
+        cd basic
         name: bin-${{ steps.slug.outputs.sha8 }}-${{matrix.os}}
         path: bin.tar.gz
