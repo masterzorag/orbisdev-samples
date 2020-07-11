@@ -31,6 +31,7 @@ jobs:
     
     - name: Compress bin folder
       run: |
+        cd basic
         tar -zcvf bin.tar.gz bin
     
     - uses: actions/upload-artifact@v2
