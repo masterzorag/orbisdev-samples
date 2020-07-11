@@ -22,6 +22,7 @@ jobs:
     - name: Compile Sample App
       run: |
         export PATH=~/cli:$PATH # .net cli
+        cd basic
         make clean all oelf eboot pkg_build
 
     - name: Get short SHA
