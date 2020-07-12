@@ -3,7 +3,7 @@
   <volume>
     <volume_type>pkg_ps4_app</volume_type>
     <volume_ts>2020-07-11 19:00:00</volume_ts>
-    <package content_id="IV0001-TEST00001_00-ORBISAPP00000000" passcode="00000000000000000000000000000000" storage_type="digital50" app_type="full" c_date="2020-07-11" />
+    <package content_id="IV0001-TEST00001_00-ORBIS_APP0000000" passcode="00000000000000000000000000000000" storage_type="digital50" app_type="full" c_date="2020-07-11" />
     <chunk_info chunk_count="1" scenario_count="1">
       <chunks>
         <chunk id="0" layer_no="0" label="Chunk #0" />
