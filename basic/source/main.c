@@ -122,12 +122,12 @@ bool initApp()
 //  int ret=initOrbisLinkApp();
 
     sceSystemServiceHideSplashScreen();
-    
-    
+
+
     confPad=orbisPadGetConf(); 
-    
+
     //if( ! initAppGl() ) return false;
-    
+
     return true;
 }
 
@@ -143,21 +143,26 @@ int main(int argc, char *argv[])
 
     sleep(3);
     /*
-        read /data/orbislink/orbislink_config.ini
-        prepare piglet modules in advance
+        prepare pad and piglet modules in advance,
+        read /data/orbislink/orbislink_config.ini for debugnet
+
+        (no nfs, audio init yet...)
     */
 
-    ret = initOrbisLinkAppVanillaGl();//loadModulesVanillaGl();
     // debugNetInit("10.0.0.2", 18198, 3);
-    debugNetPrintf(3,"loadModulesVanillaGL(), %s ret: %d\n",__FUNCTION__, ret);
-    if(ret) sceKernelIccSetBuzzer(2); // notify error
-
+    ret = initOrbisLinkAppVanillaGl();//loadModulesVanillaGl();
+    if(ret)
+    {
+        debugNetPrintf(3,"loadModulesVanillaGL(), %s ret: %d\n",__FUNCTION__, ret);
+        sceKernelIccSetBuzzer(2); // notify error
+    }
 
     flag=initApp();
-    
+
 
     /// reset timer
     time_ms = get_time_ms();
+
 
     while(flag)
     {
