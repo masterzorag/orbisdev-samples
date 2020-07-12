@@ -142,10 +142,15 @@ int main(int argc, char *argv[])
     int ret = sceKernelIccSetBuzzer(1);
 
     sleep(3);
+    /*
+        read /data/orbislink/orbislink_config.ini
+        prepare piglet modules in advance
+    */
 
     ret = initOrbisLinkAppVanillaGl();//loadModulesVanillaGl();
     // debugNetInit("10.0.0.2", 18198, 3);
     debugNetPrintf(3,"loadModulesVanillaGL(), %s ret: %d\n",__FUNCTION__, ret);
+    if(ret) sceKernelIccSetBuzzer(2); // notify error
 
 
     flag=initApp();
@@ -173,7 +178,8 @@ int main(int argc, char *argv[])
         sceKernelUsleep(1000);
     }
     
-    finishApp();
+    //finishApp();
+    finishOrbisLinkApp();
 
     exit(EXIT_SUCCESS);
 }
