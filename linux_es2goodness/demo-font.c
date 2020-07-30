@@ -183,7 +183,7 @@ void add_text( vertex_buffer_t * buffer, texture_font_t * font,
     }
 }
 /* 
- my wrapper for standard ft-gl2 add_text(), but with
+ my wrapper for standard ft-gl add_text(), but with
  added indexing of text to render then by selection!
 */
 static void my_add_text( vertex_buffer_t * buffer, texture_font_t * font,
@@ -236,33 +236,14 @@ static GLuint CreateProgram( void )
             gl_FragColor = vec4(fragColor.rgb, fragColor.a*a); \
         }";
 
-    // we can use OrbisGl wrappers, or MiniAPI ones
-//#define __PGL_ORBISGL__
+    /* we can use OrbisGl wrappers, or MiniAPI ones */
 
-#if defined __PGL_ORBISGL__
-    GLuint vertexShader;
-    GLuint fragmentShader;
-    
-    vertexShader = orbisGlCompileShader(GL_VERTEX_SHADER, s_vertex_shader_code);
-    if (!vertexShader) {
-        printf( "Error during compiling vertex shader !\n");
-    }
-
-    fragmentShader = orbisGlCompileShader(GL_FRAGMENT_SHADER, s_fragment_shader_code);
-    if (!fragmentShader) {
-        printf( "Error during compiling fragment shader !\n");
-    }
-
-    programID = orbisGlLinkProgram(vertexShader, fragmentShader);
-    if (!programID) {
-        printf( "Error during linking shader ! program_id=%d (0x%08x)\n", programID, programID);
-    }
-
-#else /* include and links against MiniAPI library! */
-    //programID = miniCompileShaders(s_vertex_shader_code, s_fragment_shader_code);
+    /* else,
+       include and links against MiniAPI library!
+    programID = miniCompileShaders(s_vertex_shader_code, s_fragment_shader_code);
+    */
     programID = BuildProgram(s_vertex_shader_code, s_fragment_shader_code);
 
-#endif
     // feedback
     printf( "program_id=%d (0x%08x)\n", programID, programID);
     return programID;

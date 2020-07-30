@@ -1,5 +1,5 @@
 /*
-	listing local folder using getdents()
+    listing local folder using getdents()
 */
 
 #include <string.h>
@@ -17,57 +17,58 @@
 //#include "defines.h"
 
 char *entryName(int entryType) {
-	switch(entryType)
-	{
-		case 4:  return "DIR";
-		case 8:  return "FILE";
-		default: return "OTHER";
-	}
+    switch(entryType)
+    {
+        case 4:  return "DIR";
+        case 8:  return "FILE";
+        default: return "OTHER";
+    }
 }
 
 
 /*
-	minimal folder listing:
-	ps4 uses getdents(),
-	glibc doesn't have so use syscall
+    minimal folder listing:
+    ps4 uses getdents(),
+    glibc doesn't have so use syscall
+    test implementation, now unused
 */
 int ls_dir(char *dirpath)
 {
-	int dfd = open(dirpath, O_RDONLY, 0); // try to open dir
-	if(dfd < 0)
-		{ fprintf(stdout, "Invalid directory. (%s)\n", dirpath); return -1; }
-	else 
-		{ fprintf(stdout, "open(%s)\n", dirpath); }
+    int dfd = open(dirpath, O_RDONLY, 0); // try to open dir
+    if(dfd < 0)
+        { fprintf(stdout, "Invalid directory. (%s)\n", dirpath); return -1; }
+    else 
+        { fprintf(stdout, "open(%s)\n", dirpath); }
 
-	struct dirent *dent;
-	char 		   buffer[512]; // fixed buffer
+    struct dirent *dent;
+    char           buffer[512]; // fixed buffer
 
-	memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, sizeof(buffer));
 
 #if 1
-	while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
+    while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
 #else
-	while(getdents(dfd, buffer, sizeof(buffer)) != 0) // get directory entries
+    while(getdents(dfd, buffer, sizeof(buffer)) != 0) // get directory entries
 #endif
-	{
-		dent = (struct dirent *)buffer;
+    {
+        dent = (struct dirent *)buffer;
 
-		while(dent->d_fileno)
-		{
-			fprintf(stdout, "[%p]: %8x %2d, type: %4d, '%s'\n", // report entry
-				dent, 
-				dent->d_fileno, dent->d_reclen, 
-				dent->d_type,   dent->d_name /* on pc we step back by 1*/ -1); 
+        while(dent->d_fileno)
+        {
+            fprintf(stdout, "[%p]: %8x %2d, type: %4d, '%s'\n", // report entry
+                dent, 
+                dent->d_fileno, dent->d_reclen, 
+                dent->d_type,   dent->d_name /* on pc we step back by 1*/ -1);
 
-			dent = (struct dirent *)((void *)dent + dent->d_reclen);
+            dent = (struct dirent *)((void *)dent + dent->d_reclen);
 
-			if(dent == (void*) &buffer[512]) break; // refill buffer
-		}
-		memset(buffer, 0, sizeof(buffer));
-	}
-	close(dfd);
+            if(dent == (void*) &buffer[512]) break; // refill buffer
+        }
+        memset(buffer, 0, sizeof(buffer));
+    }
+    close(dfd);
 
-	return 0;
+    return 0;
 }
 
 
@@ -94,94 +95,101 @@ int num = 0; // total item count
 
 int get_item_count(void)
 {
-	return num;
+    return num;
+}
+
+void *free_item_entries(entry_t *e)
+{
+    for (int i = 0; i < num; ++i)
+    {
+        if(e->name) free(e->name), e->name = NULL;
+    }
+    free(e), e = NULL;
 }
 
 entry_t *get_item_entries(char *dirpath)
-{	
-	struct dirent *dent;
-	char 		   buffer[512]; // fixed buffer
-	int dfd = 0;
+{   
+    struct dirent *dent;
+    char           buffer[512]; // fixed buffer
 
-	int r = 1,   // loop two times
-		n;
-	// we fill this struct with items
-	entry_t *p = NULL;
+    int dfd    = 0,
+        n, r   = 1;    // item counter, rounds to loop
+    entry_t *p = NULL; // we fill this struct with items
 
 loop:
-	n = 0;
-	fprintf(stderr, "loop: %d, num:%d\n", r, num);
+    n = 0;
+    fprintf(stderr, "loop: %d, num:%d\n", r, num);
 
- 	// try to open dir
-	dfd = open(dirpath, O_RDONLY, 0);
-	if(dfd < 0)
-		{ fprintf(stdout, "Invalid directory. (%s)\n", dirpath); return NULL; }
-	else 
-		{ fprintf(stdout, "open(%s)\n", dirpath); }
+    // try to open dir
+    dfd = open(dirpath, O_RDONLY, 0);
+    if(dfd < 0)
+        { fprintf(stdout, "Invalid directory. (%s)\n", dirpath); return NULL; }
+    else
+        { fprintf(stdout, "open(%s)\n", dirpath); }
 
-	memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, sizeof(buffer));
 
 #if 1
-	while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
+    while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
 #else
-	while(getdents(dfd, buffer, sizeof(buffer)) != 0) // get directory entries
+    while(getdents(dfd, buffer, sizeof(buffer)) != 0) // get directory entries
 #endif
-	{
-		dent = (struct dirent *)buffer;
+    {
+        dent = (struct dirent *)buffer;
 
-		while(dent->d_fileno)
-		{
-			switch(r)
-			{	// first round just to count items
-				case 1: 
-				{
-					fprintf(stdout, "[%p]: %8x %2d, type: %4d, '%s'\n", // report entry
-						dent, 
-						dent->d_fileno, dent->d_reclen, 
-						dent->d_type,   dent->d_name /* on pc we step back by 1*/ -1);
-					break;
-				}
-				// second round: store filenames
-				case 0: p[n].name = strdup(dent->d_name -1); break;
-			}
-			n++;
+        while(dent->d_fileno)
+        {
+            switch(r)
+            {   // first round: just count items
+                case 1: 
+                {
+                #if 0
+                    fprintf(stdout, "[%p]: %8x %2d, type: %4d, '%s'\n", // report entry
+                        dent,
+                        dent->d_fileno, dent->d_reclen,
+                        dent->d_type,   dent->d_name /* on pc we step back by 1*/ -1);
+                #endif
+                    break;
+                }
+                // second round: store filenames
+                case 0: p[n].name = strdup(dent->d_name -1); break;
+            }
+            n++;
 
-			dent = (struct dirent *)((void *)dent + dent->d_reclen);
+            dent = (struct dirent *)((void *)dent + dent->d_reclen);
 
-			if(dent == (void*) &buffer[512]) break; // refill buffer
-		}
-		memset(buffer, 0, sizeof(buffer));
-	}
-	close(dfd);
+            if(dent == (void*) &buffer[512]) break; // refill buffer
+        }
+        memset(buffer, 0, sizeof(buffer));
+    }
+    close(dfd);
 
-	// on first round, malloc for our list
-	if(!p)
-	{	// now n holds total item count, note it
-		p = calloc(n, sizeof(entry_t));	num = n;
-	}
+    // on first round, calloc for our list
+    if(!p)
+    {   // now n holds total item count, note it
+        p = calloc(n, sizeof(entry_t)); num = n;
+    }
 
-	// first round passed, loop
-	r--; if(!r) goto loop;
+    // first round passed, loop
+    r--; if(!r) goto loop;
 
-	// report
-	fprintf(stderr, "%d items at %p\n", num, p);
+    // report count
+    fprintf(stderr, "%d items at %p\n", num, p);
 
-	/* resort using custom comparision function */
+    /* resort using custom comparision function */
     qsort(p, num, sizeof(entry_t), struct_cmp_by_name);
 
-	for (int i = 0; i < num; ++i)
-	{
-		fprintf(stderr, "%s\n", p[i].name);
-	}
+    // report items
+    //for (int i = 0; i < num; ++i) fprintf(stderr, "%s\n", p[i].name);
 
-	return p;
+    return p;
 }
 
 /*
 int main(int argc, char const *argv[])
 {
-	ls_dir(argv[1]);
-	return 0;
+    ls_dir(argv[1]);
+    return 0;
 }
 */
 
