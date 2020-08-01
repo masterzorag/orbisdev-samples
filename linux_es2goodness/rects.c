@@ -8,6 +8,7 @@
 
 #include <ps4sdk.h>
 #include <debugnet.h>
+#include <orbisGl.h>
 #define  fprintf  debugNetPrintf
 #define  ERROR    DEBUGNET_ERROR
 #define  DEBUG    DEBUGNET_DEBUG
@@ -85,7 +86,6 @@ ORBIS_RenderFillRects(
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glActiveTexture(0);
 
     /* emit a triangle strip for each rectangle */
     for (idx = 0; idx < count; ++idx) {
@@ -107,7 +107,10 @@ ORBIS_RenderFillRects(
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
+    // revert state back
     glDisable(GL_BLEND);
+
+    // release VBO, texture and program
     glUseProgram(0);
 
     return 0;

@@ -10,9 +10,30 @@
 #include <math.h>
 #include <assert.h>
 
-#include  <GLES2/gl2.h>
-#include  <EGL/egl.h>
+#if defined (__PS4__)
 
+#include <ps4sdk.h>
+#include <debugnet.h>
+#include <orbisGl.h>
+#define  fprintf  debugNetPrintf
+#define  ERROR    DEBUGNET_ERROR
+#define  DEBUG    DEBUGNET_DEBUG
+#define  INFO     DEBUGNET_INFO
+
+
+#elif defined HAVE_LIBAO // on pc
+
+#include <stdio.h>
+#include <GLES2/gl2.h>
+#include <EGL/egl.h>
+#define  debugNetPrintf  fprintf
+#define  ERROR           stderr
+#define  DEBUG           stdout
+#define  INFO            stdout
+
+//#include "defines.h"
+
+#endif
 
 GLuint create_vbo(const GLsizeiptr size, const GLvoid* data, const GLenum usage)
 {
@@ -38,7 +59,7 @@ static GLuint LinkProgram(GLuint vertexShader, GLuint fragmentShader)
     GLint linkSuccess;
     glGetProgramiv(programHandle, GL_LINK_STATUS, &linkSuccess);
     if (linkSuccess == GL_FALSE)
-        { printf("GL_LINK_STATUS error!\n"); sleep(2); }
+        { fprintf(ERROR, "GL_LINK_STATUS error!\n"); sleep(2); }
 
     /* once we have the SL porgram, don't leak any shader! */
     if(vertexShader)   { glDeleteShader(vertexShader),   vertexShader   = 0; }
@@ -60,7 +81,7 @@ static GLuint BuildShader(const char *source, GLenum shaderType)
     {
         GLchar messages[256];
         glGetShaderInfoLog(shaderHandle, sizeof(messages), 0, &messages[0]);
-        printf("compile glsl error : %s\n", messages);
+        fprintf(ERROR, "compile glsl error : %s\n", messages);
     }
     return shaderHandle;
 }

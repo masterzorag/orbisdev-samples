@@ -270,8 +270,6 @@ static texture_font_t *font = NULL;
 // ------------------------------------------------------------------- main ---
 int es2init_text (int width, int height)
 {
-    printf("es2init_text\n");
-
     size_t h; // text size in pt
 
     /* init page: compose all texts to draw */
@@ -370,7 +368,7 @@ int es2init_text (int width, int height)
     // compile, link and use shader
     shader = CreateProgram();
                                   
-    if(!shader) { printf("program creation failed\n"); }
+    if(!shader) { fprintf(ERROR, "program creation failed\n"); }
 
     mat4_set_identity( &projection );
     mat4_set_identity( &model );
