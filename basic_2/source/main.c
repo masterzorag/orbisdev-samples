@@ -182,6 +182,8 @@ int main(int argc, char *argv[])
     // init libraries
     flag=initApp();
 
+    // init GLES2 stuff
+    ORBIS_RenderFillRects_init( ATTR_ORBISGL_WIDTH,ATTR_ORBISGL_HEIGHT );
 
     /// reset timer
     time_ms = get_time_ms();
@@ -199,7 +201,8 @@ int main(int argc, char *argv[])
             //goto err;
         }
 
-
+        /// draw
+        ORBIS_RenderFillRects_rndr();
 
         /// get timing, fps
         if( ! (frame %WEN) )
@@ -218,9 +221,8 @@ int main(int argc, char *argv[])
     }
     
     // destructors
+    ORBIS_RenderFillRects_fini();
     finishOrbisLinkApp();
 
-    return 0;
-
-    //exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
