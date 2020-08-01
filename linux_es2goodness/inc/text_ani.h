@@ -7,7 +7,7 @@
 
   2020, masterzorag
 */
-
+#include <freetype-gl.h>
 
 // shared, from demo-font.c
 extern GLuint           shader;           

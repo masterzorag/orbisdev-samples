@@ -24,7 +24,7 @@ GLuint BuildProgram(const char *vShader, const char *fShader);
 
 #if defined FT_DEMO || FT_DEMO_2 // overlay alike, for testing
 /// from demo-font.c
-#include "freetype-gl.h"
+//#include <freetype-gl.h>
 int  es2init_text (int width, int height);
 void render_text  (void);
 void es2sample_end(void);
@@ -41,15 +41,15 @@ void es2sample_end(void);
 #else
 
   // Clang Extended Vectors
-  typedef float vec2 __attribute__((ext_vector_type(2)));
-  typedef float vec4 __attribute__((ext_vector_type(4)));
+//  typedef float vec2 __attribute__((ext_vector_type(2)));
+//  typedef float vec4 __attribute__((ext_vector_type(4)));
 
 #endif
 
 
 /// from png.c
 GLuint load_png_asset_into_texture(const char *relative_path);
-extern vec2 tex_size; // last loaded png size as (w, h)
+//extern vec2 tex_size; // last loaded png size as (w, h)
 
 
 /// from sprite.c

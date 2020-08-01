@@ -38,19 +38,29 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <freetype-gl.h>  // links against libfreetype-gl
 
-#if defined(__APPLE__)
-    #include <Glut/glut.h>
-#elif defined(_WIN32) || defined(_WIN64)
-    #include <GLUT/glut.h>
-#elif defined(__PS4__)
-    #include <debugnet.h>
-    #include <orbisFile.h>
-#endif
+#if defined (__PS4__)
+
+#include <ps4sdk.h>
+#include <debugnet.h>
+#define  fprintf  debugNetPrintf
+#define  ERROR    DEBUGNET_ERROR
+#define  DEBUG    DEBUGNET_DEBUG
+#define  INFO     DEBUGNET_INFO
 
 
-//#include "MiniShader.h" // miniCompileShaders
+#elif defined HAVE_LIBAO // on pc
+
+#include <stdio.h>
+#define  debugNetPrintf  fprintf
+#define  ERROR           stderr
+#define  DEBUG           stdout
+#define  INFO            stdout
+
 #include "defines.h"
+
+#endif
 
 
 // ------------------------------------------------------- typedef & struct ---
@@ -111,9 +121,9 @@ void render_text( void )
 
         if(0) /* draw whole VBO (storing all added texts) */
         {
-           vertex_buffer_render( buffer, GL_TRIANGLES );
+            vertex_buffer_render( buffer, GL_TRIANGLES ); // all vbo
         }
-        else /* draw a range/selection of indeces (= glyph) */
+        else /* draw a range/selection of indexes (= glyph) */
         {
             vertex_buffer_render_setup( buffer, GL_TRIANGLES ); // start draw
             
@@ -140,6 +150,7 @@ void render_text( void )
             framecount++;
         }
     }
+
     glDisable( GL_BLEND );  // Reset state back
 
     // we already swapframe in main renderloop()!
@@ -185,6 +196,8 @@ void add_text( vertex_buffer_t * buffer, texture_font_t * font,
 /* 
  my wrapper for standard ft-gl add_text(), but with
  added indexing of text to render then by selection!
+
+ we append to default ft-gl VBOs, atlas and texture!
 */
 static void my_add_text( vertex_buffer_t * buffer, texture_font_t * font,
                          char * text, vec4 * color, vec2 * pen,
@@ -195,7 +208,7 @@ static void my_add_text( vertex_buffer_t * buffer, texture_font_t * font,
     idx->count  = vector_size( buffer->items ) - idx->offset;
     num_of_texts++;
     /* report the item info */
-    printf("item[%.2d] .off: %3d, .len: %2d, buffer glyph count: %3zu, %s\n",
+    fprintf(INFO, "item[%.2d] .off: %3d, .len: %2d, buffer glyph count: %3zu, %s\n",
             num_of_texts, idx->offset, idx->count, vector_size( buffer->items ), text );
 }
 // ------------------------------------------------------ freetype-gl shaders ---
@@ -245,11 +258,13 @@ static GLuint CreateProgram( void )
     programID = BuildProgram(s_vertex_shader_code, s_fragment_shader_code);
 
     // feedback
-    printf( "program_id=%d (0x%08x)\n", programID, programID);
+    fprintf(INFO, "program_id=%d (0x%08x)\n", programID, programID);
+
     return programID;
 }
 
-// libfreetype-gl pass last composed Text_Length in pixel, we use to align text
+
+// freetype-gl pass last composed Text_Length in pixel, we use to align text!
 extern float tl;
 static texture_font_t *font = NULL;
 // ------------------------------------------------------------------- main ---
@@ -284,7 +299,7 @@ int es2init_text (int width, int height)
     char *s = "this sample show 2 GLSL programs:";   // set text
 
     texture_font_load_glyphs( font, s );        // set textures
-    pen.x = (800 - tl);                      // use Text_Length to align pen.x
+    pen.x = (width - tl);                       // use Text_Length to align pen.x
     // use outline
 	font->rendermode        = RENDER_OUTLINE_EDGE;
     font->outline_thickness = .3f;
@@ -321,7 +336,7 @@ int es2init_text (int width, int height)
         pen.x -= 100;
         my_add_text( buffer, font, s, &col, &pen, &texts[num_of_texts] );  // set vertexes
 
-        texture_font_delete( font ); // cleanup font
+        texture_font_delete( font );   // end with font, cleanup
     }
 
     ttf   = orbisFileGetFileContent("/hostapp/fonts/zrnic_rg.ttf");
@@ -336,11 +351,11 @@ int es2init_text (int width, int height)
 
         texture_font_load_glyphs( font, text );
         
-        pen.x = (1024 - tl) /2; // use Text_Length to align pen.x
+        pen.x = (width - tl) /2;  // use Text_Length to center pen.x
 
         my_add_text( buffer, font, text, &white, &pen, &texts[num_of_texts] );  // set vertexes
 
-        texture_font_delete( font );
+        texture_font_delete( font );   // end with font, cleanup
     }
 
     /* create texture and upload atlas into gpu memory */
@@ -370,5 +385,6 @@ void es2sample_end( void )
 {
     texture_atlas_delete(atlas),  atlas  = NULL;
     vertex_buffer_delete(buffer), buffer = NULL;
+
     if(shader) glDeleteProgram(shader), shader = 0;
 }
