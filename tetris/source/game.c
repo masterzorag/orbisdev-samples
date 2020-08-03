@@ -116,7 +116,9 @@ int keyPressed = 1234;
 void tetris_play(void)
 {
     movePiece(keyPressed);
-    //printf("%d\n", );
+    // reset key!
+    keyPressed = 1234;
+
     drawField(field);
 //    drawControls();
 //    drawScore(score);
@@ -156,19 +158,19 @@ int setNewPieceInField(int type) {
 void movePiece(int key) {
   int wait;
   switch (key) {
-  case 0://SDLK_LEFT:
+  case 113: //SDLK_LEFT:
     moveLeft();
     moveDown();
     break;
-  case 1://SDLK_RIGHT:
+  case 114: //SDLK_RIGHT:
     moveRight();
     break;
-  case 2://SDLK_SPACE:
+  case 116: //SDLK_SPACE:
     do {
       wait = moveDown();
     } while (wait != 1);
     break;
-  case 3://SDLK_RETURN:
+  case 111: //SDLK_RETURN:
     rotatePiece();
     break;
   case 4://SDLK_ESCAPE:

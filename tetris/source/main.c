@@ -55,22 +55,22 @@ void updateController()
         if(orbisPadGetButtonPressed(ORBISPAD_UP))// || orbisPadGetButtonHold(ORBISPAD_UP))
         {
             debugNetPrintf(DEBUGNET_DEBUG,"Up pressed\n");
+            keyPressed = 111;
         }
         if(orbisPadGetButtonPressed(ORBISPAD_DOWN))// || orbisPadGetButtonHold(ORBISPAD_DOWN))
         {
             debugNetPrintf(DEBUGNET_DEBUG,"Down pressed\n");
+            keyPressed = 116;
         }
         if(orbisPadGetButtonPressed(ORBISPAD_RIGHT))// || orbisPadGetButtonHold(ORBISPAD_RIGHT))
         {
             debugNetPrintf(DEBUGNET_DEBUG,"Right pressed\n");
-
-            //keyPressed = 
+            keyPressed = 114;
         }
         if(orbisPadGetButtonPressed(ORBISPAD_LEFT))// || orbisPadGetButtonHold(ORBISPAD_LEFT))
         {
             debugNetPrintf(DEBUGNET_DEBUG,"Left pressed\n");
-
-            //keyPressed = 
+            keyPressed = 113;
         }
         if(orbisPadGetButtonPressed(ORBISPAD_TRIANGLE))
         {
@@ -81,14 +81,10 @@ void updateController()
         if(orbisPadGetButtonPressed(ORBISPAD_CIRCLE))
         {
             debugNetPrintf(DEBUGNET_DEBUG,"Circle pressed\n");
-
-            //keyPressed =       
         }
         if(orbisPadGetButtonPressed(ORBISPAD_CROSS))
         {
             debugNetPrintf(DEBUGNET_DEBUG,"Cross pressed\n");
-
-            //keyPressed = 
         }
         if(orbisPadGetButtonPressed(ORBISPAD_SQUARE))
         {
