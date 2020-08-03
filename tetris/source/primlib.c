@@ -14,6 +14,13 @@ static SDL_Renderer *sdlRenderer;
 #include <debugnet.h>
 #endif
 
+
+typedef struct
+{
+    float x;
+    float y;
+} SDL_FPoint;
+
 typedef struct
 {
     float h;
@@ -32,7 +39,26 @@ extern vec4 color; // from rect.c
 
 void rect(int x1, int y1, int x2, int y2, u_char r, u_char g, u_char b) {
   //rectangleRGBA(sdlRenderer, x1, y1, x2 + 1, y2 + 1, r, g, b, SDL_ALPHA_OPAQUE);
-//  492, 420 - 512, 440
+    color.r = r, color.g = g, color.b = b, color.a = 255;
+    /* normalize 0-1 */
+    color /= 255.f;
+    /* grab position and *size* in px! */
+    vec2 p = (vec2) {      x1,      y1 },
+         s = (vec2) { x2 - x1, y2 - y1 };
+    /* convert to normalized coordinates! */
+    vec4 n = px_pos_to_normalized( &p, &s );
+
+    n.zw += n.xy; // turn size into p2
+
+    // test lines
+    SDL_FPoint v[4];
+    v[0].x = n.x, v[0].y = n.y;  v[1].x = n.z, v[1].y = n.y;
+    v[2].x = n.x, v[2].y = n.w;  v[3].x = n.z, v[3].y = n.w;
+    ORBIS_RenderDrawLines(&v[0], 6); // horiz
+
+    v[0].x = n.x, v[0].y = n.y;  v[1].x = n.x, v[1].y = n.w;
+    v[2].x = n.z, v[2].y = n.y;  v[3].x = n.z, v[3].y = n.w;
+    ORBIS_RenderDrawLines(&v[0], 6); // vert
 }
 
 void filledRect(int x1, int y1, int x2, int y2, u_char r, u_char g, u_char b) {

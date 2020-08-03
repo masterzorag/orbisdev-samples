@@ -180,8 +180,8 @@ vec4 px_pos_to_normalized(vec2 *pos, vec2 *size)
 {
     vec4 n; // 2 points .xy pair: (x, y),  (x + texture.w, y + texture.h)
 
-    n.xy  = -1. + 2. / resolution * (*pos); // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
-    n.zw  = 2. * *size / resolution;
+    n.xy  = 2. / resolution * (*pos) - 1.; // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
+    n.zw  = 2. / resolution * (*size);
     n.yw *= -1.; // flip Y axis!
 //  printf("%f,%f,%f,%f\n", n.x, n.y, n.w, n.w);
     return n;
