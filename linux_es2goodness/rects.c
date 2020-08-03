@@ -57,10 +57,16 @@ static const char *fs =
 
 static GLuint simpleProgram = 0;
 static vec2   resolution;
-static vec4   color = { 1., 0., .5, 1. }; // red RGBA
+       vec4   color = { 1., 0., .5, 1. }; // RGBA
 // shaders locations
 static GLint  a_position_location;
 static GLint  u_color_location;
+
+typedef struct
+{
+    float x;
+    float y;
+} SDL_FPoint;
 
 typedef struct
 {
@@ -70,8 +76,48 @@ typedef struct
     float y;
 } SDL_FRect;
 
-static int
-ORBIS_RenderFillRects(
+
+int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
+    const SDL_FPoint *points, int count)
+{
+    GLfloat vertices[4];
+    int idx;
+
+    glUseProgram(simpleProgram);
+
+    //glDisable(GL_CULL_FACE);
+    // enable alpha
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    /* emit a line loop for each point pair */
+    for (idx = 0; idx < count /2; idx+=2) {
+        const SDL_FPoint *p1 = &points[idx   ],
+                         *p2 = &points[idx +1];
+        //printf("%f,%f,%f,%f\n", p1->x, p1->y, p2->x, p2->y);
+        /* (x, y) for 2 points: 4*/
+        vertices[0] = p1->x;  vertices[1] = p1->y;
+        vertices[2] = p2->x;  vertices[3] = p2->y;
+        /* each (vec2)point comes from pairs of floats */
+        glVertexAttribPointer    (a_position_location, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+        glEnableVertexAttribArray(a_position_location);
+        /* write color to use to the shader location */
+        glUniform4f(u_color_location, color.r, color.g, color.b, color.a);
+        /* floats pairs for points from 0-4 */
+        glDrawArrays(GL_LINES, 0, 2);
+    }
+
+    // revert state back
+    glDisable(GL_BLEND);
+
+    // release VBO, texture and program
+    glUseProgram(0);
+
+    return 0;
+}
+
+int ORBIS_RenderFillRects(
     // SDL_Renderer *renderer,
     const SDL_FRect *rects, int count)
 {
@@ -85,7 +131,6 @@ ORBIS_RenderFillRects(
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 
     /* emit a triangle strip for each rectangle */
     for (idx = 0; idx < count; ++idx) {
@@ -131,13 +176,13 @@ void ORBIS_RenderFillRects_init( int width, int height )
 }
 
 
-static vec4 px_pos_to_normalized(vec2 *pos, vec2 *size)
+vec4 px_pos_to_normalized(vec2 *pos, vec2 *size)
 {
     vec4 n; // 2 points .xy pair: (x, y),  (x + texture.w, y + texture.h)
 
     n.xy  = -1. + 2. / resolution * (*pos); // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
-    n.zw  = *size / resolution;
-    n.yw *= -1.; // flip Y axis
+    n.zw  = 2. * *size / resolution;
+    n.yw *= -1.; // flip Y axis!
 //  printf("%f,%f,%f,%f\n", n.x, n.y, n.w, n.w);
     return n;
 }
@@ -159,6 +204,12 @@ void ORBIS_RenderFillRects_rndr(void)
     }
     // gles render all rects
     ORBIS_RenderFillRects(r, COUNT);
+
+// test lines
+    SDL_FPoint p[2];
+    p[0].x = -.4, p[0].y = .4;
+    p[1].x = -.2, p[1].y = .6;
+    ORBIS_RenderDrawLines(&p[0], 2);
 }
 
 void ORBIS_RenderFillRects_fini(void)
