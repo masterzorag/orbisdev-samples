@@ -84,8 +84,8 @@ void filledRect(int x1, int y1, int x2, int y2, u_char r, u_char g, u_char b) {
 */
 }
 
-int screenWidth()  { return 1024; }
-int screenHeight() { return  480; }
+int screenWidth()  { return 1920; }
+int screenHeight() { return 1080; }
 
 #if 0
 void clearScreen() {
