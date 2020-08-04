@@ -5,7 +5,7 @@ extern const u_char pieceColor[7][3];
 extern const u_char setPieceColor[7][3];
 extern const   char pieces[7][4][4][4];
 
-//const int squareWidth = 20;
+//const int squareWidth = SQUARE_WIDTH;
 
 void drawField(int field[F_COLS][F_ROWS]) {
   int screenWidthPadding  = (screenWidth()  - (F_COLS * SQUARE_WIDTH)) / 2;
@@ -14,19 +14,19 @@ void drawField(int field[F_COLS][F_ROWS]) {
 //Decoration of the field 
   rect(screenWidthPadding  - 5,
        screenHeightPadding - 5,
-       screenWidthPadding  + 20 * F_COLS + 4,
-       screenHeightPadding + 20 * F_ROWS + 3, 255, 255, 255);
+       screenWidthPadding  + SQUARE_WIDTH * F_COLS + 4,
+       screenHeightPadding + SQUARE_WIDTH * F_ROWS + 3, 255, 255, 255);
   rect(screenWidthPadding  - 3,
        screenHeightPadding - 3,
-       screenWidthPadding  + 20 * F_COLS + 6,
-       screenHeightPadding + 20 * F_ROWS + 6, 255, 255, 255);
+       screenWidthPadding  + SQUARE_WIDTH * F_COLS + 6,
+       screenHeightPadding + SQUARE_WIDTH * F_ROWS + 6, 255, 255, 255);
 
   for (int counter_c = 0; counter_c < F_COLS; counter_c++) {
     for (int counter_r = 0; counter_r < F_ROWS; counter_r++) {
-      int x1 = screenWidthPadding  +  counter_c      * 20;
-      int x2 = screenWidthPadding  + (counter_c + 1) * 20;
-      int y1 = screenHeightPadding +  counter_r      * 20;
-      int y2 = screenHeightPadding + (counter_r + 1) * 20;
+      int x1 = screenWidthPadding  +  counter_c      * SQUARE_WIDTH;
+      int x2 = screenWidthPadding  + (counter_c + 1) * SQUARE_WIDTH;
+      int y1 = screenHeightPadding +  counter_r      * SQUARE_WIDTH;
+      int y2 = screenHeightPadding + (counter_r + 1) * SQUARE_WIDTH;
 
       rect(x1, y1, x2, y2, 23, 23, 23);
       if (whatIsInside(field[counter_c][counter_r]) == PLAYER) {
@@ -115,18 +115,18 @@ void drawEndGame(int score) {
 void drawNextPiece(int nextPiece) {
   int screenWidthPadding  = (screenWidth()  - (F_COLS * SQUARE_WIDTH)) / 3;
   int screenHeightPadding = (screenHeight() - (F_ROWS * SQUARE_WIDTH)) / 2;
-/*
-  rect(screenWidthPadding - 5, screenHeightPadding - 5, screenWidthPadding + 20 * 4 + 10,
-       screenHeightPadding + 20 * 6 + 5, 255, 255, 255);
-  rect(screenWidthPadding - 3, screenHeightPadding - 3, screenWidthPadding + 20 * 4 + 13,
-       screenHeightPadding + 20 * 6 + 8, 255, 255, 255);
-*/
+
+  rect(screenWidthPadding - 5, screenHeightPadding - 5, screenWidthPadding + SQUARE_WIDTH * 4 + 10,
+       screenHeightPadding + SQUARE_WIDTH * 6 + 5, 255, 255, 255);
+  rect(screenWidthPadding - 3, screenHeightPadding - 3, screenWidthPadding + SQUARE_WIDTH * 4 + 13,
+       screenHeightPadding + SQUARE_WIDTH * 6 + 8, 255, 255, 255);
+
   for (int counterC = 0; counterC < 4; counterC++) {
     for (int counterR = 0; counterR < 4; counterR++) {
-      int x1 = screenWidthPadding  + (counterC + 1) * 20;
-      int x2 = screenWidthPadding  + (counterC + 2) * 20;
-      int y1 = screenHeightPadding + (counterR + 2) * 20;
-      int y2 = screenHeightPadding + (counterR + 3) * 20;
+      int x1 = screenWidthPadding  + (counterC + 1) * SQUARE_WIDTH;
+      int x2 = screenWidthPadding  + (counterC + 2) * SQUARE_WIDTH;
+      int y1 = screenHeightPadding + (counterR + 2) * SQUARE_WIDTH;
+      int y2 = screenHeightPadding + (counterR + 3) * SQUARE_WIDTH;
 
       if (whatIsInside(pieces[nextPiece][0][counterC][counterR]) == PLAYER) {
         filledRect(x1, y1, x2, y2, pieceColor[nextPiece][0],

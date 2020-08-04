@@ -6,7 +6,7 @@
 
 #include "game.h"
 
-#define SQUARE_WIDTH 20
+#define SQUARE_WIDTH 30
 
 void drawField(int field[F_COLS][F_ROWS]);
 void drawControls();

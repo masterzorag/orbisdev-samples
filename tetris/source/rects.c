@@ -91,7 +91,7 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    /* emit a line loop for each point pair */
+    /* emit a line for each point pair */
     for (idx = 0; idx <= count /2; idx+=2) {
         const SDL_FPoint *p1 = &points[idx   ],
                          *p2 = &points[idx +1];
