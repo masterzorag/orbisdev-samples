@@ -11,12 +11,16 @@ void drawField(int field[F_COLS][F_ROWS]) {
   int screenWidthPadding  = (screenWidth()  - (F_COLS * SQUARE_WIDTH)) / 2;
   int screenHeightPadding = (screenHeight() - (F_ROWS * SQUARE_WIDTH)) / 2;
 
-  /* Decoration of the field 
-  rect(screenWidthPadding - 5, screenHeightPadding - 5, screenWidthPadding + 20 * F_COLS + 4,
+//Decoration of the field 
+  rect(screenWidthPadding  - 5,
+       screenHeightPadding - 5,
+       screenWidthPadding  + 20 * F_COLS + 4,
        screenHeightPadding + 20 * F_ROWS + 3, 255, 255, 255);
-  rect(screenWidthPadding - 3, screenHeightPadding - 3, screenWidthPadding + 20 * F_COLS + 6,
+  rect(screenWidthPadding  - 3,
+       screenHeightPadding - 3,
+       screenWidthPadding  + 20 * F_COLS + 6,
        screenHeightPadding + 20 * F_ROWS + 6, 255, 255, 255);
-*/
+
   for (int counter_c = 0; counter_c < F_COLS; counter_c++) {
     for (int counter_r = 0; counter_r < F_ROWS; counter_r++) {
       int x1 = screenWidthPadding  +  counter_c      * 20;

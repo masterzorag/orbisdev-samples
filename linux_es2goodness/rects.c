@@ -76,7 +76,7 @@ typedef struct
     float y;
 } SDL_FRect;
 
-
+// takes point count
 int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     const SDL_FPoint *points, int count)
 {
@@ -92,7 +92,7 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     /* emit a line loop for each point pair */
-    for (idx = 0; idx < count /2; idx+=2) {
+    for (idx = 0; idx <= count /2; idx+=2) {
         const SDL_FPoint *p1 = &points[idx   ],
                          *p2 = &points[idx +1];
         //printf("%f,%f,%f,%f\n", p1->x, p1->y, p2->x, p2->y);

@@ -54,11 +54,11 @@ void rect(int x1, int y1, int x2, int y2, u_char r, u_char g, u_char b) {
     SDL_FPoint v[4];
     v[0].x = n.x, v[0].y = n.y;  v[1].x = n.z, v[1].y = n.y;
     v[2].x = n.x, v[2].y = n.w;  v[3].x = n.z, v[3].y = n.w;
-    ORBIS_RenderDrawLines(&v[0], 6); // horiz
+    ORBIS_RenderDrawLines(&v[0], 4); // horiz
 
     v[0].x = n.x, v[0].y = n.y;  v[1].x = n.x, v[1].y = n.w;
     v[2].x = n.z, v[2].y = n.y;  v[3].x = n.z, v[3].y = n.w;
-    ORBIS_RenderDrawLines(&v[0], 6); // vert
+    ORBIS_RenderDrawLines(&v[0], 4); // vert
 }
 
 void filledRect(int x1, int y1, int x2, int y2, u_char r, u_char g, u_char b) {
