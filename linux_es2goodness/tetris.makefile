@@ -11,19 +11,18 @@ INC  = -I$(ORBISDEV)/usr/include/orbis/freetype-gl \
        -I$(ORBISDEV)/usr/include/orbis/freetype \
        -I$(ORBISDEV)/usr/include/orbis/MiniAPI \
        -Iinc \
-       -I/home/user/Documents/tetris/include
+       -I../tetris/include
 
 EXE := egl_demo_tetris
 
-
-SRC_DIR  := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
+SRC_DIR  := $(ORBISDEV)/../orbisdev-portlibs/freetype-gl/source
 #SRC_DIR  += /home/user/Documents/orbisdev-portlibs/MiniAPI/source
 #SRC_DIR := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
 SRC      := egl.c fileIO.c shader_common.c glslsandbox.c lines_and_rects.c rects.c ls_dir.c \
-			/home/user/Documents/tetris/source/primlib.c \
-			/home/user/Documents/tetris/source/game.c \
-			/home/user/Documents/tetris/source/userInterface.c \
-			/home/user/Documents/orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
+			../tetris/source/primlib.c \
+			../tetris/source/game.c \
+			../tetris/source/userInterface.c \
+			$(ORBISDEV)/../orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
 SRC      += $(wildcard $(SRC_DIR)/*.c)
 
 OBJ_DIR  := obj

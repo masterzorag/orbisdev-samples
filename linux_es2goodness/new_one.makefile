@@ -12,17 +12,13 @@ INC  = -I$(ORBISDEV)/usr/include/orbis/freetype-gl \
        -I$(ORBISDEV)/usr/include/orbis/MiniAPI \
        -Iinc
 
-#INC += -I/home/user/Documents/orbisdev-portlibs/MiniAPI/include \
-#	   -Iinc
-
 EXE := egl_demo_text_ani
 
-
-SRC_DIR  := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
+SRC_DIR  := $(ORBISDEV)/../orbisdev-portlibs/freetype-gl/source
 #SRC_DIR  += /home/user/Documents/orbisdev-portlibs/MiniAPI/source
 #SRC_DIR := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
 SRC      := egl.c fileIO.c shader_common.c demo-font.c glslsandbox.c text_ani.c ls_dir.c filemanager.c \
-			/home/user/Documents/orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
+			$(ORBISDEV)/../orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
 SRC      += $(wildcard $(SRC_DIR)/*.c)
 
 OBJ_DIR  := obj
