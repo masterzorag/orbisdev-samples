@@ -21,10 +21,10 @@ extern vertex_buffer_t *buffer;
 /* each fx have those states */
 enum ani_states
 {
-    CLOSED,
-    IN,
-    DEFAULT,
-    OUT
+    ANI_CLOSED,
+    ANI_IN,
+    ANI_DEFAULT,
+    ANI_OUT
 };
 
 enum ani_type_num

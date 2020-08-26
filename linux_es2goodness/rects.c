@@ -4,28 +4,8 @@
     standard GLES2 code to draw FillRects
 */
 
-#if defined (__PS4__)
-
-#include <ps4sdk.h>
-#include <debugnet.h>
-#include <orbisGl.h>
-#define  fprintf  debugNetPrintf
-#define  ERROR    DEBUGNET_ERROR
-#define  DEBUG    DEBUGNET_DEBUG
-#define  INFO     DEBUGNET_INFO
-
-
-#elif defined HAVE_LIBAO // on pc
-
-#include <stdio.h>
-#define  debugNetPrintf  fprintf
-#define  ERROR           stderr
-#define  DEBUG           stdout
-#define  INFO            stdout
-
 #include "defines.h"
 
-#endif
 
 // Clang Extended Vectors
 typedef float vec2 __attribute__((ext_vector_type(2)));
@@ -187,23 +167,42 @@ vec4 px_pos_to_normalized(vec2 *pos, vec2 *size)
     return n;
 }
 
+vec2 px_pos_to_normalized2(vec2 *pos)
+{
+    vec2 n; // 2 points .xy pair: (x, y)
+
+    n.xy  =  2. / resolution * (*pos) - 1.; // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
+    n.y  *= -1.; // flip Y axis!
+//  printf("%f,%f,%f,%f\n", n.x, n.y, n.w, n.w);
+    return n;
+}
+
 #define COUNT  6
 void ORBIS_RenderFillRects_rndr(void)
 {
     SDL_FRect r[COUNT];
-    vec4 nr;
+    vec2 n, s;
     // fill in some pos, size
     for (int i = 0; i < COUNT; ++i)
     {
-        vec2 p = (vec2) { 100. + i * 20., 100. + i * 20. },  // position in px
-             s = (vec2) {  10. + i * 10,   10. + i * 20. };  // size in px
+        vec2 p = (vec2) { 100. + i * 20.,  100. + i * 20. },  // position in px
         /* convert to normalized coordinates */
-            nr = px_pos_to_normalized( &p, &s );
-        r[i].x = nr.x, r[i].y = nr.y;
-        r[i].w = nr.z, r[i].h = nr.w;
+        n = px_pos_to_normalized2(&p);
+        r[i].x = n.x, r[i].y = n.y;
+
+        s  = (vec2) { 10. + i * 10,  10. + i * 20. };  // size in px
+        s += p;
+        /* convert to normalized coordinates */
+        n  = px_pos_to_normalized2(&s);
+        r[i].w = n.x - r[i].x, r[i].h = n.y - r[i].y;
     }
     // gles render all rects
     ORBIS_RenderFillRects(r, COUNT);
+
+#if defined TETRIS
+    // test tetris primlib
+    filledRect(1000, 400, 1010, 410, 255, 0, 0); // p1, p2
+#endif
 
 // test lines
     SDL_FPoint p[2];

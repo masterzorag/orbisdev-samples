@@ -4,9 +4,30 @@
   here are the parts
 */
 
-#include <stddef.h>
+#if defined (__ORBIS__)
+
+#include <ps4sdk.h>
+#include <debugnet.h>
+#define  fprintf  debugNetPrintf
+#define  ERROR    DEBUGNET_ERROR
+#define  DEBUG    DEBUGNET_DEBUG
+#define  INFO     DEBUGNET_INFO
+#include <orbisGl.h>
+
+#else
+
+#include <stdio.h>
+#define  debugNetPrintf  fprintf
+#define  ERROR           stderr
+#define  DEBUG           stdout
+#define  INFO            stdout
 #include <GLES2/gl2.h>
-#include <orbisAudio.h>
+//#include <orbisAudio.h>
+
+#endif // defined (__ORBIS__)
+
+
+#include <stddef.h>
 
 /// from fileIO.c
 unsigned char *orbisFileGetFileContent( const char *filename );
@@ -15,11 +36,14 @@ extern size_t _orbisFile_lastopenFile_size;
 
 /// from shader-common.c
 GLuint create_vbo  (const GLsizeiptr size, const GLvoid *data, const GLenum usage);
-GLuint BuildShader (const char *source, GLenum shaderType);
+//GLuint BuildShader (const char *source, GLenum shaderType);
 /// build (and dump) from shader source code
 GLuint BuildProgram(const char *vShader, const char *fShader);
-
 //GLuint CreateProgramFromBinary(const char *vShader, const char *fShader);
+
+
+// from cmd_build.c
+char **build_cmd(char *cmd_line);
 
 
 #if defined FT_DEMO || FT_DEMO_2 // overlay alike, for testing

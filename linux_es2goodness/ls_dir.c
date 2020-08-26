@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>  // malloc, qsort, free
+#include <unistd.h>  // close
 
 /*
   Glibc does not provide a wrapper for
@@ -29,8 +30,8 @@ char *entryName(int entryType) {
 /*
     minimal folder listing:
     ps4 uses getdents(),
-    glibc doesn't have so use syscall
-    test implementation, now unused
+    glibc doesn't have so use syscall.
+    test implementation, now unused (see below)
 */
 int ls_dir(char *dirpath)
 {
@@ -45,17 +46,18 @@ int ls_dir(char *dirpath)
 
     memset(buffer, 0, sizeof(buffer));
 
-#if 1
-    while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
+    // get directory entries
+#if defined (__ORBIS__)
+    while(getdents(dfd, buffer, sizeof(buffer)) != 0)
 #else
-    while(getdents(dfd, buffer, sizeof(buffer)) != 0) // get directory entries
+    while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
 #endif
     {
         dent = (struct dirent *)buffer;
 
         while(dent->d_fileno)
         {
-            fprintf(stdout, "[%p]: %8x %2d, type: %4d, '%s'\n", // report entry
+            fprintf(stdout, "[%p]: %lx %2d, type: %4d, '%s'\n", // report entry
                 dent, 
                 dent->d_fileno, dent->d_reclen, 
                 dent->d_type,   dent->d_name /* on pc we step back by 1*/ -1);
@@ -98,7 +100,7 @@ int get_item_count(void)
     return num;
 }
 
-void *free_item_entries(entry_t *e)
+void free_item_entries(entry_t *e)
 {
     for (int i = 0; i < num; ++i)
     {
@@ -129,10 +131,11 @@ loop:
 
     memset(buffer, 0, sizeof(buffer));
 
-#if 1
-    while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
+    // get directory entries
+#if defined (__ORBIS__)
+    while(getdents(dfd, buffer, sizeof(buffer)) != 0)
 #else
-    while(getdents(dfd, buffer, sizeof(buffer)) != 0) // get directory entries
+    while(syscall(SYS_getdents, dfd, buffer, sizeof(buffer)) != 0)
 #endif
     {
         dent = (struct dirent *)buffer;
@@ -174,7 +177,7 @@ loop:
     r--; if(!r) goto loop;
 
     // report count
-    fprintf(stderr, "%d items at %p\n", num, p);
+    fprintf(stderr, "%d items at %p\n", num, (void*)p);
 
     /* resort using custom comparision function */
     qsort(p, num, sizeof(entry_t), struct_cmp_by_name);

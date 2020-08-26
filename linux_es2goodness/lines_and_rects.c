@@ -8,33 +8,12 @@
 
 #include <freetype-gl.h>  // links against libfreetype-gl
 
-#if defined (__PS4__)
-
-#include <ps4sdk.h>
-#include <debugnet.h>
-#define  fprintf  debugNetPrintf
-#define  ERROR    DEBUGNET_ERROR
-#define  DEBUG    DEBUGNET_DEBUG
-#define  INFO     DEBUGNET_INFO
-
-
-#elif defined HAVE_LIBAO // on pc
-
-#include <stdio.h>
-#define  debugNetPrintf  fprintf
-#define  ERROR           stderr
-#define  DEBUG           stdout
-#define  INFO            stdout
-
 #include "defines.h"
-
-#endif
-
 
 // ------------------------------------------------------- typedef & struct ---
 typedef struct {
-    float x, y, z;    // position
-    vec4 color;; // color
+    float x, y, z;  // position
+    vec4 color;     // RGBA color
 } vertex_t;
 
 typedef struct {
@@ -137,9 +116,8 @@ extern float tl;
 // ------------------------------------------------------------------- init ---
 void es2init_lines_and_rect( int width, int height )
 {
-    vec4 blue  = {{0,0,1,1}};
-    vec4 black = {{0,0,0,1}};
-
+    vec4 blue  = {{ 0,0,1,1 }};
+    vec4 black = {{ 0,0,0,1 }};
     /* load .ttf in memory */
     void *ttf  = orbisFileGetFileContent("/hostapp/fonts/zrnic_rg.ttf");
 
@@ -156,7 +134,7 @@ void es2init_lines_and_rect( int width, int height )
     vec2 pen, origin;
 
     texture_glyph_t *glyph  = texture_font_get_glyph( big, "g" );
-    origin.x = width/2  - glyph->offset_x - glyph->width/2;
+    origin.x = width /2 - glyph->offset_x - glyph->width /2;
     origin.y = height/2 - glyph->offset_y + glyph->height/2;
 //    add_text( text_buffer, big, "g", &black, &origin );
 
@@ -216,8 +194,8 @@ void es2init_lines_and_rect( int width, int height )
             {0.8*width, origin.y , 0, blue},
 
         };
-    GLuint indices [] = {  0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,
-                          13,14,15,16,17,18,19,20,21,22,23,24,25};
+    GLuint indices [] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,
+                         13,14,15,16,17,18,19,20,21,22,23,24,25 };
     vertex_buffer_push_back( line_buffer, vertices, 26, indices, 26 );
 
     // points
@@ -245,17 +223,17 @@ for (int i = 0; i < 10; ++i)
     int  x1 = (int)( x0 + 64 );
     int  y1 = (int)( y0 - 64 );
 
-    GLuint indices2[6] = {0,1,2, 0,2,3}; // (two triangles)
+    GLuint indices2[6] = {0,1,2,  0,2,3}; // (two triangles)
 
     /* VBO is setup as: "vertex:3f, vec4 color */ 
-    vertex_t vertices2[4] = { { x0,y0,0,   color },
-                              { x0,y1,0,   color },
-                              { x1,y1,0,   color },
-                              { x1,y0,0,   color } };
+    vertex_t vertices2[4] = { { x0,y0,0,  color },
+                              { x0,y1,0,  color },
+                              { x1,y1,0,  color },
+                              { x1,y0,0,  color } };
     vertex_buffer_push_back( rects_buffer, vertices2, 4, indices2, 6 );
     pen.x   += 72.;
     pen.y   -= 32.;
-    color.g -= i * 0.1;
+    color.g -= i * 0.1; // to show some difference: less green
 }
 #endif
     
@@ -275,10 +253,11 @@ for (int i = 0; i < 10; ++i)
 
 void es2fini_lines_and_rect( void )
 {
-//    texture_atlas_delete(atlas);        atlas        = NULL;
+    texture_atlas_delete(atlas);        atlas        = NULL;
     vertex_buffer_delete(text_buffer);  text_buffer  = NULL;
     vertex_buffer_delete(line_buffer);  line_buffer  = NULL;
     vertex_buffer_delete(point_buffer); point_buffer = NULL;
 
-    if(shader) glDeleteProgram(shader), shader = 0;
+    if(shader)    glDeleteProgram(shader),    shader    = 0;
+    if(mz_shader) glDeleteProgram(mz_shader), mz_shader = 0;
 }

@@ -9,31 +9,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include <unistd.h> // sleep
 
-#if defined (__PS4__)
-
-#include <ps4sdk.h>
-#include <debugnet.h>
-#include <orbisGl.h>
-#define  fprintf  debugNetPrintf
-#define  ERROR    DEBUGNET_ERROR
-#define  DEBUG    DEBUGNET_DEBUG
-#define  INFO     DEBUGNET_INFO
-
-
-#elif defined HAVE_LIBAO // on pc
-
-#include <stdio.h>
-#include <GLES2/gl2.h>
-#include <EGL/egl.h>
-#define  debugNetPrintf  fprintf
-#define  ERROR           stderr
-#define  DEBUG           stdout
-#define  INFO            stdout
-
-//#include "defines.h"
-
-#endif
+#include "defines.h"
 
 GLuint create_vbo(const GLsizeiptr size, const GLvoid* data, const GLenum usage)
 {
