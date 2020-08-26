@@ -36,6 +36,7 @@ vec4 px_pos_to_normalized(vec2 *pos, vec2 *size);
 //int ORBIS_RenderFillRects(onst SDL_FRect *rects, int count);
 
 extern vec4 color; // from rect.c
+extern vec2 v_res; // from game.c
 
 void rect(int x1, int y1, int x2, int y2, u_char r, u_char g, u_char b) {
   //rectangleRGBA(sdlRenderer, x1, y1, x2 + 1, y2 + 1, r, g, b, SDL_ALPHA_OPAQUE);
@@ -84,8 +85,8 @@ void filledRect(int x1, int y1, int x2, int y2, u_char r, u_char g, u_char b) {
 */
 }
 
-int screenWidth()  { return 1920; }
-int screenHeight() { return 1080; }
+int screenWidth()  { return v_res.x; }
+int screenHeight() { return v_res.y; }
 
 #if 0
 void clearScreen() {

@@ -13,7 +13,12 @@ Audio *music1;
 Audio *music2;
 Audio *music3;
 */
+
+// Clang Extended Vectors
+typedef float vec2 __attribute__((ext_vector_type(2)));
+
 /* Global variables */
+vec2 v_res; // externed
 bool playing;
 int rotation;
 int score;
@@ -70,11 +75,12 @@ int whatIsInside(int value) {
   }
 }
 
-int tetris_init() {
+int tetris_init(int width, int height) {
   /* Init the seed for random numbers */
   srand(time(NULL));
 
   /* Init graphics */
+  v_res = (vec2){ width, height };
 /*
   if (initGraph("It's Tetris!")) { exit(3); }
   music1 = createAudio("music/tetris.wav", 0, SDL_MIX_MAXVOLUME);
@@ -89,6 +95,7 @@ int tetris_init() {
   increaseLevel();
 
 return 1;
+  // NOT reached, but for reference!
 
   do {
 //  clearScreen(); // renderClear()
@@ -164,8 +171,14 @@ void movePiece(int key) {
     break;
   case 114: //SDLK_RIGHT:
     moveRight();
+    moveDown();
     break;
-  case 116: //SDLK_SPACE:
+  case 116: //SDLK_DOWN:
+    moveDown();
+    moveDown();
+    moveDown();
+    break;
+  case 110: //SDLK_SPACE:
     do {
       wait = moveDown();
     } while (wait != 1);
@@ -287,8 +300,6 @@ void moveRight() {
 
     actualC += 1;
   }
-
-  moveDown();
 }
 
 int moveDown() {
@@ -440,6 +451,7 @@ void checkIfLine() {
 
     if (line) {
       score += 50;
+      fprintf(INFO, "level:%d, score: %d\n", level, score);
       increaseLevel();
       for (int rows2 = rows; rows2 > 0; rows2--) {
         for (int columns = 0; columns < F_COLS; columns++) {

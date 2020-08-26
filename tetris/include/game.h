@@ -1,6 +1,26 @@
 #ifndef TETRIS__GAME_H
 #define TETRIS__GAME_H
 
+#if defined (__ORBIS__)
+
+#include <ps4sdk.h>
+#include <debugnet.h>
+#define  fprintf  debugNetPrintf
+#define  ERROR    DEBUGNET_ERROR
+#define  DEBUG    DEBUGNET_DEBUG
+#define  INFO     DEBUGNET_INFO
+#include <orbisGl.h>
+
+#else
+
+#include <stdio.h>
+#define  debugNetPrintf  fprintf
+#define  ERROR           stderr
+#define  DEBUG           stdout
+#define  INFO            stdout
+
+#endif // defined (__ORBIS__)
+
 #define DELAY 16
 #define F_COLS 10
 #define F_ROWS 20

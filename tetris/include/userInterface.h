@@ -1,12 +1,15 @@
 #ifndef TETRIS__USER_INTERFACE_H
 #define TETRIS__USER_INTERFACE_H
 
-#include <stdio.h>
 #include <sys/types.h> // u_char and friends
 
 #include "game.h"
 
+#if defined (__ORBIS__)
 #define SQUARE_WIDTH 30
+#else
+#define SQUARE_WIDTH 20
+#endif
 
 void drawField(int field[F_COLS][F_ROWS]);
 void drawControls();

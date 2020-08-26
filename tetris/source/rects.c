@@ -96,7 +96,7 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
         const SDL_FPoint *p1 = &points[idx   ],
                          *p2 = &points[idx +1];
         //printf("%f,%f,%f,%f\n", p1->x, p1->y, p2->x, p2->y);
-        /* (x, y) for 2 points: 4*/
+        /* (x, y) for 2 points: 4 */
         vertices[0] = p1->x;  vertices[1] = p1->y;
         vertices[2] = p2->x;  vertices[3] = p2->y;
         /* each (vec2)point comes from pairs of floats */

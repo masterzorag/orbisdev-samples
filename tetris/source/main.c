@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
 
     // tetris init
-    tetris_init();
+    tetris_init( ATTR_ORBISGL_WIDTH,ATTR_ORBISGL_HEIGHT );
 
     /// reset timer
     time_ms = get_time_ms();
