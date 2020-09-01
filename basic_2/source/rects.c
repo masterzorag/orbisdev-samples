@@ -1,10 +1,10 @@
 /*
     mimic an SDL_Rect
 
-    standard GLES2 code to draw FillRects
+    standard GLES2 code to DrawLines and FillRects
 */
 
-#if defined (__PS4__)
+#if defined (__ORBIS__)
 
 #include <ps4sdk.h>
 #include <debugnet.h>
@@ -14,8 +14,7 @@
 #define  DEBUG    DEBUGNET_DEBUG
 #define  INFO     DEBUGNET_INFO
 
-
-#elif defined HAVE_LIBAO // on pc
+#else // on linux
 
 #include <stdio.h>
 #define  debugNetPrintf  fprintf
@@ -46,7 +45,7 @@ static const char *vs =
     "}";
 
 static const char *fs =
-/// 1. default, use texture color
+/// 1. use passed u_color
     "precision mediump float;"
     "varying   vec4    fragColor;"
     ""
@@ -57,7 +56,7 @@ static const char *fs =
 
 static GLuint simpleProgram = 0;
 static vec2   resolution;
-       vec4   color = { 1., 0., .5, 1. }; // RGBA
+       vec4   color = { 1., 0., .5, 1. }; // current RGBA color
 // shaders locations
 static GLint  a_position_location;
 static GLint  u_color_location;
@@ -76,7 +75,7 @@ typedef struct
     float y;
 } SDL_FRect;
 
-
+// takes point count
 int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     const SDL_FPoint *points, int count)
 {
@@ -91,8 +90,8 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    /* emit a line loop for each point pair */
-    for (idx = 0; idx < count /2; idx+=2) {
+    /* emit a line for each point pair */
+    for (idx = 0; idx <= count /2; idx+=2) {
         const SDL_FPoint *p1 = &points[idx   ],
                          *p2 = &points[idx +1];
         //printf("%f,%f,%f,%f\n", p1->x, p1->y, p2->x, p2->y);
@@ -180,8 +179,8 @@ vec4 px_pos_to_normalized(vec2 *pos, vec2 *size)
 {
     vec4 n; // 2 points .xy pair: (x, y),  (x + texture.w, y + texture.h)
 
-    n.xy  = -1. + 2. / resolution * (*pos); // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
-    n.zw  = 2. * *size / resolution;
+    n.xy  = 2. / resolution * (*pos) - 1.; // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
+    n.zw  = 2. / resolution * (*size);
     n.yw *= -1.; // flip Y axis!
 //  printf("%f,%f,%f,%f\n", n.x, n.y, n.w, n.w);
     return n;
@@ -216,3 +215,4 @@ void ORBIS_RenderFillRects_fini(void)
 {
     if (simpleProgram) glDeleteProgram(simpleProgram), simpleProgram = 0;
 }
+

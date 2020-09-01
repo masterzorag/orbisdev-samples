@@ -9,8 +9,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include <unistd.h> // sleep
 
-#if defined (__PS4__)
+#if defined (__ORBIS__)
 
 #include <ps4sdk.h>
 #include <debugnet.h>
@@ -20,8 +21,7 @@
 #define  DEBUG    DEBUGNET_DEBUG
 #define  INFO     DEBUGNET_INFO
 
-
-#elif defined HAVE_LIBAO // on pc
+#else // on linux
 
 #include <stdio.h>
 #include <GLES2/gl2.h>

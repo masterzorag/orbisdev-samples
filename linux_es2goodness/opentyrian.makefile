@@ -10,16 +10,16 @@
 INC  = -I$(ORBISDEV)/usr/include/orbis/freetype-gl \
        -I$(ORBISDEV)/usr/include/orbis/freetype \
        -Iinc \
-       -I/home/user/Documents/basic_3/include \
+       -I../basic_3/include \
        -I/usr/include/SDL2
 
 EXE := egl_demo_opentyrian
 
 
-SRC_DIR  := /home/user/Documents/basic_3/source/opentyrian
+SRC_DIR  := ../basic_3/source/opentyrian
 SRC      := egl.c fileIO.c shader_common.c cmd_build.c \
-			/home/user/Documents/basic_3/source/myGLES2.c \
-			/home/user/Documents/basic_3/source/mySDL.c \
+			../basic_3/source/myGLES2.c \
+			../basic_3/source/mySDL.c \
 			$(ORBISDEV)/../orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
 SRC      += $(wildcard $(SRC_DIR)/*.c)
 

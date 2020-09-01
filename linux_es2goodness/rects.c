@@ -1,7 +1,7 @@
 /*
     mimic an SDL_Rect
 
-    standard GLES2 code to draw FillRects
+    standard GLES2 code to DrawLines and FillRects
 */
 
 #include "defines.h"
@@ -26,7 +26,7 @@ static const char *vs =
     "}";
 
 static const char *fs =
-/// 1. default, use texture color
+/// 1. use passed u_color
     "precision mediump float;"
     "varying   vec4    fragColor;"
     ""
@@ -37,7 +37,7 @@ static const char *fs =
 
 static GLuint simpleProgram = 0;
 static vec2   resolution;
-       vec4   color = { 1., 0., .5, 1. }; // RGBA
+       vec4   color = { 1., 0., .5, 1. }; // current RGBA color
 // shaders locations
 static GLint  a_position_location;
 static GLint  u_color_location;
@@ -71,7 +71,7 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    /* emit a line loop for each point pair */
+    /* emit a line for each point pair */
     for (idx = 0; idx <= count /2; idx+=2) {
         const SDL_FPoint *p1 = &points[idx   ],
                          *p2 = &points[idx +1];
