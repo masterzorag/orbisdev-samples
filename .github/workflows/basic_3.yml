@@ -1,0 +1,51 @@
+name: basic_3 CI
+
+on:
+  push:
+  pull_request:
+  repository_dispatch:
+  workflow_dispatch:
+    types: [run_build]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: orbisdev/orbisdev:latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        apk add clang make bash python2
+        apk add libintl icu-dev wget
+        wget https://dot.net/v1/dotnet-install.sh && chmod 755 dotnet-install.sh && ./dotnet-install.sh -c Current --install-dir ~/cli
+
+    - name: Fetch SDL2 headers
+      run: |
+        mkdir -p $ORBISDEV/usr/include/orbis/SDL2
+        wget https://github.com/orbisdev/SDL2_ORBIS/archive/master.zip && unzip master.zip 'SDL2_ORBIS-master/include/*' -j -d $ORBISDEV/usr/include/orbis/SDL2
+
+    - name: Fetch assets
+      run: |
+        cd basic_3/pkg/media
+        wget -qO- http://camanis.net/tyrian/tyrian21.zip | unzip -j -
+
+    - name: Compile Sample App
+      run: |
+        export PATH=~/cli:$PATH # .net cli
+        cd basic_3
+        make clean all oelf eboot pkg_build
+
+    - name: Get short SHA
+      id: slug
+      run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+    
+    - name: Compress bin folder
+      run: |
+        cd basic_3
+        tar -zcvf bin.tar.gz bin
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: bin-${{ steps.slug.outputs.sha8 }}-${{matrix.os}}
+        path: basic_3/bin.tar.gz
