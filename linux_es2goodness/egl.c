@@ -212,6 +212,10 @@ void render()
     ORBIS_RenderFillRects_rndr();
 #endif
 
+#if defined MY_RECT
+    ORBIS_RenderFillRects_rndr();
+#endif
+
 #if defined OPENTYRIAN
     // NOT reached with opentyrian!
 #endif
@@ -491,6 +495,10 @@ es2init_fm((int)window_width, (int)window_height); // text fx
     // demo-font.c init
     es2init_lines_and_rect((int)window_width, (int)window_height);
     // like SDL
+    ORBIS_RenderFillRects_init((int)window_width, (int)window_height);
+#endif
+
+#if defined MY_RECT
     ORBIS_RenderFillRects_init((int)window_width, (int)window_height);
 #endif
 
