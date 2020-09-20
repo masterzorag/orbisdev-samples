@@ -60,7 +60,7 @@ int ls_dir(char *dirpath)
             fprintf(stdout, "[%p]: %lx %2d, type: %4d, '%s'\n", // report entry
                 dent, 
                 dent->d_fileno, dent->d_reclen, 
-                dent->d_type,   dent->d_name /* on pc we step back by 1*/ -1);
+                dent->d_type,   dent->d_name /* on pc we step back by 1 */ -1);
 
             dent = (struct dirent *)((void *)dent + dent->d_reclen);
 
@@ -155,7 +155,7 @@ loop:
                     break;
                 }
                 // second round: store filenames
-                case 0: p[n].name = strdup(dent->d_name -1); break;
+                case 0: p[n].name = strdup(dent->d_name /* on pc we step back by 1 */ -1); break;
             }
             n++;
 
