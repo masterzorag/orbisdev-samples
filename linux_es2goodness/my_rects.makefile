@@ -16,7 +16,7 @@ EXE := egl_demo_my_rects
 SRC_DIR  := $(ORBISDEV)/../orbisdev-portlibs/freetype-gl/source
 #SRC_DIR  += /home/user/Documents/orbisdev-portlibs/MiniAPI/source
 #SRC_DIR := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
-SRC      := egl.c fileIO.c shader_common.c my_rects.c ls_dir.c
+SRC      := egl.c fileIO.c shader_common.c my_rects.c png.c icons.c ls_dir.c
 #			/home/user/Documents/orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
 SRC      += $(wildcard $(SRC_DIR)/*.c)
 
@@ -25,13 +25,13 @@ OBJ      := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 CC       := clang
 CPPFLAGS := 
-CFLAGS   := -Wall -O3 -DMY_RECT -ggdb
+CFLAGS   := -Wall -O3 -DMY_RECT -DPNG_ICONS -ggdb
 
 # where libs are?
 #LDFLAGS  :=	-L/home/user/Downloads/liborbis/portlibs/MiniAPI/lib -lMiniAPI
 #LDFLAGS := -v
 
-LDLIBS   := -lX11 -lEGL -lGLESv2 -lm -lfreetype
+LDLIBS   := -lX11 -lEGL -lGLESv2 -lm -lfreetype -lpng
 LDLIBS   += -lao -lpthread
 #			-L/Archive/PS4-work/OrbisLink/samples/pc_es2template/source/ -lMiniAPI
 

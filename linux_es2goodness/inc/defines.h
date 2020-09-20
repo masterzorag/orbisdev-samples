@@ -65,15 +65,15 @@ void es2sample_end(void);
 #else
 
   // Clang Extended Vectors
-//  typedef float vec2 __attribute__((ext_vector_type(2)));
-//  typedef float vec4 __attribute__((ext_vector_type(4)));
+  typedef float vec2 __attribute__((ext_vector_type(2)));
+  typedef float vec4 __attribute__((ext_vector_type(4)));
 
 #endif
 
 
 /// from png.c
 GLuint load_png_asset_into_texture(const char *relative_path);
-//extern vec2 tex_size; // last loaded png size as (w, h)
+extern vec2 tex_size; // last loaded png size as (w, h)
 
 
 /// from sprite.c

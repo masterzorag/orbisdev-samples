@@ -216,6 +216,13 @@ void render()
     ORBIS_RenderFillRects_rndr();
 #endif
 
+#if defined PNG_ICONS
+    /// update the framecount
+    on_GLES2_Update(num_frames);
+    // render all textures VBOs but first one (the fullscreen one)
+    for(int i = 1; i < NUM_OF_TEXTURES; i++) on_GLES2_Render(i); // skip background
+#endif
+
 #if defined OPENTYRIAN
     // NOT reached with opentyrian!
 #endif
@@ -496,6 +503,13 @@ es2init_fm((int)window_width, (int)window_height); // text fx
     es2init_lines_and_rect((int)window_width, (int)window_height);
     // like SDL
     ORBIS_RenderFillRects_init((int)window_width, (int)window_height);
+#endif
+
+#if defined PNG_ICONS
+    on_GLES2_Init_icons((int)window_width, (int)window_height);
+//    printf("on_GLES2_Init\n");
+    // set viewport
+//    on_GLES2_Size_icons((int)window_width, (int)window_height);
 #endif
 
 #if defined MY_RECT
