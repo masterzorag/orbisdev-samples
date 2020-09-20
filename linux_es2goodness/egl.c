@@ -22,8 +22,8 @@
 #include "defines.h" // the parts list
 
 
-//extern int selected_icon;   // from texture.c
-int selected_icon;
+extern int selected_icon;   // from icons.c
+//int selected_icon;
 int is_facing_left;  // from  sprite.c
 
 const char vertex_src [] =
@@ -351,8 +351,10 @@ uint8_t updateController(uint8_t *p)
                     break;
                 case 24: /* q */ quit = true; break;
                 default:  break;
+                  
             }
 #endif
+            printf("selected_icon %d\n", selected_icon); 
         }
     }
     return ret;
