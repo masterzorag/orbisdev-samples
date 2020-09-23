@@ -16,7 +16,7 @@ EXE := egl_demo_my_rects
 SRC_DIR  := $(ORBISDEV)/../orbisdev-portlibs/freetype-gl/source
 #SRC_DIR  += /home/user/Documents/orbisdev-portlibs/MiniAPI/source
 #SRC_DIR := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
-SRC      := egl.c fileIO.c shader_common.c my_rects.c png.c icons.c ls_dir.c
+SRC      := egl.c fileIO.c shader_common.c GLES2_rects.c png.c GLES2_textures.c ls_dir.c
 #			/home/user/Documents/orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
 SRC      += $(wildcard $(SRC_DIR)/*.c)
 

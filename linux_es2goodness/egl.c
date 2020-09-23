@@ -23,8 +23,11 @@
 
 
 extern int selected_icon;   // from icons.c
-//int selected_icon;
+
 int is_facing_left;  // from  sprite.c
+
+double dt = 0,  // delta time
+      u_t = 0;  // total time
 
 const char vertex_src [] =
 "                                        \
@@ -217,10 +220,10 @@ void render()
 #endif
 
 #if defined PNG_ICONS
-    /// update the framecount
-    on_GLES2_Update(num_frames);
+    /// update the time
+    on_GLES2_Update(u_t);
     // render all textures VBOs but first one (the fullscreen one)
-    for(int i = 1; i < NUM_OF_TEXTURES; i++) on_GLES2_Render(i); // skip background
+    for(int i = 0; i < NUM_OF_TEXTURES; i++) on_GLES2_Render(i); // skip background
 #endif
 
 #if defined OPENTYRIAN
@@ -507,15 +510,15 @@ es2init_fm((int)window_width, (int)window_height); // text fx
     ORBIS_RenderFillRects_init((int)window_width, (int)window_height);
 #endif
 
+#if defined MY_RECT
+    ORBIS_RenderFillRects_init((int)window_width, (int)window_height);
+#endif
+
 #if defined PNG_ICONS
     on_GLES2_Init_icons((int)window_width, (int)window_height);
 //    printf("on_GLES2_Init\n");
     // set viewport
 //    on_GLES2_Size_icons((int)window_width, (int)window_height);
-#endif
-
-#if defined MY_RECT
-    ORBIS_RenderFillRects_init((int)window_width, (int)window_height);
 #endif
 
 #if defined TETRIS
@@ -562,12 +565,14 @@ es2init_fm((int)window_width, (int)window_height); // text fx
 //  init_selection_rectangle(window_width, window_height);
 
     // this is needed for time measuring  -->  frames per second
-    struct timezone tz;
+//    struct timezone tz;
     struct timeval  t1, t2,
                     t3, t4; // count each passed second
-    gettimeofday ( &t1 , &tz );
-    double dt;
- 
+    gettimeofday ( &t1 , NULL );
+
+    // reset chrono to the " run*time* "
+    t4 = t3 = t1;
+
     while ( !quit ) { /// the main render loop
  
         /* check for user input */
@@ -575,15 +580,14 @@ es2init_fm((int)window_width, (int)window_height); // text fx
  
         render(); // now we finally put something on the screen
  
-        // timing, again
+        // timing, for fps
         if ( ++num_frames % 100 == 0 ) {
-            gettimeofday( &t2, &tz );
+            gettimeofday( &t2, NULL );
             dt = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6;
             printf("fps: %f, %.4f seconds\n", (float)(num_frames / dt), dt);
             num_frames = 0;
             t1 = t2;
-            t4 = t2;
-            //usleep(2000);
+            //t4 = t2;
         }
 
 #if defined GLSLSANDBOX
@@ -591,18 +595,22 @@ es2init_fm((int)window_width, (int)window_height); // text fx
 #endif
 
         // timing, again
-        if( num_frames > 20 )
+        //if( num_frames > 20 )
         {
-            gettimeofday( &t3, &tz );
+            gettimeofday( &t3, NULL );
+            // calculate delta time
             dt = t3.tv_sec - t4.tv_sec + (t3.tv_usec - t4.tv_usec) * 1e-6;
-
-            if (dt > 1.f) // each passed second
+            // each passed second...
+            //if (dt > 2.f)
             {
-                printf("dt = %0.4f\n", dt);
+                //printf("dt = %0.4f\n", dt);
                 t4 = t3;
                 // sample 48000 texture
                 //on_GLES2_Update_sound(dt);
             }
+            // update total time
+            u_t += dt;
+            //printf("u_t = %0.4f\n", u_t);
         }
 #if defined _MAPI_ 
       //UpdateScene(dt);

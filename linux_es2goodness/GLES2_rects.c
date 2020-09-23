@@ -57,7 +57,7 @@ typedef struct
 } SDL_FRect;
 
 typedef vec2  my_Point;
-typedef vec4  my_FRect;
+typedef vec4  my_FRect; // ( p1.xy, p2.xy )
 
 extern int selected_icon;   // from icons.c
 
@@ -106,8 +106,7 @@ int ORBIS_RenderFillRects(
     // SDL_Renderer *renderer,
     const my_FRect *rects, int count)
 {
-    GLfloat vertices[8];
-    int idx;
+    GLfloat vertices[8]; // (4 float pairs!)
 
     glUseProgram(simpleProgram);
     //glDisable(GL_CULL_FACE);
@@ -117,12 +116,13 @@ int ORBIS_RenderFillRects(
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     /* emit a triangle strip for each rectangle */
-    for (idx = 0; idx < count; ++idx) {
-        const my_FRect *rect = &rects[idx];
+    for(int i = 0; i < count; ++i)
+    {
+        const my_FRect *rect = &rects[i];
 
         GLfloat xMin = rect->x,  xMax = rect->z,
                 yMin = rect->y,  yMax = rect->w;
-        /* (x, y) for 4 points: 8*/
+        /* (x, y) for 4 points: 8 */
         vertices[0] = xMin;  vertices[1] = yMin;
         vertices[2] = xMax;  vertices[3] = yMin;
         vertices[4] = xMin;  vertices[5] = yMax;
@@ -137,7 +137,7 @@ int ORBIS_RenderFillRects(
     }
     // revert state back
     glDisable(GL_BLEND);
-    // release VBO, texture and program
+    // release VBO, texture, program, ...
     glUseProgram(0);
 
     return 0;
@@ -157,7 +157,7 @@ void ORBIS_RenderFillRects_init( int width, int height )
     glViewport(0, 0, width, height);
 }
 
-
+// useless
 vec4 px_pos_to_normalized2(vec2 *pos, vec2 *size)
 {
     vec4 n; // 2 points .xy pair: (x, y),  (x + texture.w, y + texture.h)
@@ -171,37 +171,33 @@ vec4 px_pos_to_normalized2(vec2 *pos, vec2 *size)
 
 vec2 px_pos_to_normalized(vec2 *pos)
 {
-    vec2 n; // 2 points .xy pair: (x, y)
-
-    n.xy  =  2. / resolution * (*pos) - 1.; // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
-    n.y  *= -1.; // flip Y axis!
-//  printf("%f,%f,%f,%f\n", n.x, n.y, n.w, n.w);
+    vec2 n; // 2 points .xy pair
+    // (-1,-1) is BOTTOMLEFT, (1,1) is UPRIGHT
+    n.xy  =  2. / resolution * (*pos) - 1.;
+    n.y  *= -1.;  // flip Y axis!
+//  printf("n(%f, %f)\n", n.x, n.y);
     return n;
 }
 
 #define COUNT  8
 void ORBIS_RenderFillRects_rndr(void)
 {
-    //SDL_FRect r[COUNT];
     my_FRect r[COUNT];
-    vec2 n, s;
+    vec2 s;
     // fill in some pos, and size
     for (int i = 0; i < COUNT; ++i)
     {
         // position in px
         vec2 p = (vec2) { 32. + i * (100. + 1. /*border*/),  
-                         100. + 4 *  20. },
+                         100. + 4 *  20. };
         /* convert to normalized coordinates */
-        n = px_pos_to_normalized(&p);
-        //r[i].x = n.x, r[i].y = n.y;
-        r[i].xy = n;
-
-        s  = (vec2) { 100.,  100. };  // size in px
+        r[i].xy = px_pos_to_normalized(&p);
+        // size in px
+        s  = (vec2) { 100.,  100. };
+        // turn size into destination point!
         s += p;
         /* convert to normalized coordinates */
-        n  = px_pos_to_normalized(&s);
-        //r[i].w = n.x - r[i].x, r[i].h = n.y - r[i].y;
-        r[i].zw = n;
+        r[i].zw = px_pos_to_normalized(&s);
     }
     // gles render all rects
     ORBIS_RenderFillRects(r, COUNT);
@@ -211,32 +207,31 @@ void ORBIS_RenderFillRects_rndr(void)
     filledRect(1000, 400, 1010, 410, 255, 0, 0); // p1, p2
 #endif
 
-// test lines
+    /* now test a line, same color */
     my_Point p[2];
     p[0].x = -.4, p[0].y = .4;
     p[1].x = -.2, p[1].y = .6;
     ORBIS_RenderDrawLines(&p[0], 2);
 
-    // draw a box around selected rect
+
+    /* draw a white box around selected rect */
     vec4 curr_color = color;
-    color = (vec4) { 1., 1., 1., 1. }; // set white
-    my_Point b[8];
-
-    vec2 v[4];
-    int i   = selected_icon;
-    v[0]    = r[i].xy;
-    v[1]    = r[i].xw;
-    v[2]    = r[i].zw;
-    v[3]    = r[i].zy;
+    // vector splat 1 -> set white
+    color = (vec4) ( 1. );
+    // a box is 4 segments joining 2 points
+    vec2 b[4 * 2];
     // 1 line for each 2 points
-    b[0] = v[0],  b[1] = v[1];
-    b[2] = v[1],  b[3] = v[2];
-    b[4] = v[2],  b[5] = v[3];
-    b[6] = v[3],  b[7] = v[0];
+    int i = selected_icon;
+    b[0]  = r[i].xy,  b[1] = r[i].xw;
+    b[2]  = r[i].xw,  b[3] = r[i].zw;
+    b[4]  = r[i].zw,  b[5] = r[i].zy;
+    b[6]  = r[i].zy,  b[7] = r[i].xy;
 
-    ORBIS_RenderDrawLines(&b[0*2], 8);
+    ORBIS_RenderDrawLines(&b[0], 8);
     // restore current color
     color = curr_color;
+
+    /* ... */
 }
 
 void ORBIS_RenderFillRects_fini(void)

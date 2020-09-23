@@ -109,5 +109,8 @@ void   user_end  (void);
 
 
 /// for icons.c, sprite.c
-#define NUM_OF_TEXTURES  (6)
+#define NUM_OF_TEXTURES  (8)
 #define NUM_OF_SPRITES   (6)
+
+// from my_rects.c
+vec2 px_pos_to_normalized(vec2 *pos);

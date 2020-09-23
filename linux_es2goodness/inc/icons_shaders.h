@@ -48,8 +48,8 @@ static const char *simpleFragmentShader[2] =
     "uniform   float     u_time;"
     "void main(void)"
     "{"
-    "  gl_FragColor = texture2D(u_TextureUnit, v_TextureCoordinates)"
-    "               * vec4(abs(sin(u_time)));" /* fade in/out effect */
+    "  gl_FragColor    = texture2D(u_TextureUnit, v_TextureCoordinates);"
+    "  gl_FragColor.a *= abs(sin(u_time));" /* fade in/out effect */
     "}"
 } ;
 

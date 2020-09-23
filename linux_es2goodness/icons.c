@@ -23,7 +23,12 @@
     1. use glowing effect on passed time
 */
 #define NUM_OF_PROGRAMS  (2)
-
+enum programs
+{
+    TEXTURED,
+    GLOWING,
+    MAX_NUM_OF_PROGRAMS
+}
 
 static GLuint slProgram[NUM_OF_PROGRAMS];
 static GLuint simpleProgram;  // the current one
@@ -34,6 +39,17 @@ static GLuint buffer [NUM_OF_TEXTURES];
 
 
 // the pngs we turn into VBOs + textures
+#if 0 //defined LM
+char *pngs[NUM_OF_TEXTURES] =
+{
+    "/home/fedora/vm/pics/bk.png", // fullscreen background
+    "/home/fedora/vm/pics/1.png",
+    "/home/fedora/vm/pics/2.png",
+    "/home/fedora/vm/pics/3.png",
+    "/home/fedora/vm/pics/4.png",
+    "/home/fedora/vm/pics/5.png"
+};
+#else
 char *pngs[NUM_OF_TEXTURES] =
 {
     "/hostapp/system/textures/msxorbis.png", // fullscreen background
@@ -43,6 +59,7 @@ char *pngs[NUM_OF_TEXTURES] =
     "/hostapp/fames/settings-icon.png",
     "/hostapp/fames/emu-icon.png"
 };
+#endif
 
 // the png we apply glowing effect by switching shader
 int selected_icon = 1;
@@ -137,7 +154,7 @@ void on_GLES2_Size_icons(int view_w, int view_h)
 }
 */
 
-void on_GLES2_Update(int frame)
+void on_GLES2_Update(double frame)
 {
     float t = (float)frame /10.; // slow down
 
@@ -145,9 +162,9 @@ void on_GLES2_Update(int frame)
     {
         glUseProgram(slProgram[i]);
         // write the value to the shaders
-        printf("%.4f %d\n", t, frame);
-        glUniform1f(glGetUniformLocation(slProgram[i], "u_time"), t);
+        glUniform1f(glGetUniformLocation(slProgram[i], "u_time"), frame);
     }
+    printf("t:%.4f u_time:%.6f\n", t, frame);
 }
 
 void on_GLES2_Render(int num) // which texture to draw
