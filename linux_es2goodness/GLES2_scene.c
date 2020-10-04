@@ -35,7 +35,7 @@ void GLES2_scene_init( int w, int h )
 #endif
 
     // additions
-    GLES2_ani_init  (w, h);
+    GLES2_ani_init(w, h);
 }
 
 
@@ -50,7 +50,10 @@ void GLES2_scene_render(void)
     on_GLES2_Update(u_t);
 
     // UI: pngs
-    for(int i = 0; i < NUM_OF_TEXTURES; i++) on_GLES2_Render_icons(i);
+    for(int i = 0; i < NUM_OF_TEXTURES; i++)
+    {
+		on_GLES2_Render_icon(page[0]->item[i].texture, i);
+    }
 #endif
     // UI: selection box
     on_GLES2_Render_box(selected_icon);
@@ -60,9 +63,8 @@ void GLES2_scene_render(void)
         // UI: texts
         GLES2_render_page(page[0]);
     }
-    else
+    else // additions
     {
-        // additions
         GLES2_ani_test(NULL);
         GLES2_ani_update(u_t);
     }
@@ -120,7 +122,7 @@ void GLES2_scene_on_pressed_button(int button)
     // trigger a test to create next page and test cleanup
     if(page_num != page_cur)
     {
-        page[1] = compose_page(1);
+        page[1] = compose_page(2);
         //page[0] = page[1];
         //page[1]
         destroy_page(page[1]); 

@@ -202,6 +202,7 @@ GLuint load_png_asset_into_texture(const char* relative_path)
  // const RawImageData raw_image_data   = get_raw_image_data_from_png(png_file.data, png_file.data_length);
 
     const unsigned char *png_file       = orbisFileGetFileContent(relative_path);
+    if(!png_file) return 0;
     const RawImageData   raw_image_data = get_raw_image_data_from_png(png_file, _orbisFile_lastopenFile_size);
     const GLuint      texture_object_id = load_texture(raw_image_data.width, raw_image_data.height,
                                                        raw_image_data.gl_color_format,

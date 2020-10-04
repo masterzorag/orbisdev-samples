@@ -174,7 +174,8 @@ void GLES2_ani_fini  ( void );
 // from GLES2_textures.c
 void on_GLES2_Init_icons(int view_w, int view_h);
 void on_GLES2_Update(double time);
-void on_GLES2_Render_icons(int num);
+//void on_GLES2_Render_icons(int num);
+void on_GLES2_Render_icon(GLuint texture, int num);
 void on_GLES2_Render_box(int num);
 void on_GLES2_Final(void);
 

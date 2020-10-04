@@ -69,7 +69,7 @@ typedef struct
 
 unsigned char *http_fetch_from(const char *url);
 
-// index all used_tokens
+// index (write) all used_tokens
 static int json_index_used_tokens(page_info_t *page)
 {
     int r, i, c = 0, idx = 0;
@@ -154,7 +154,7 @@ page_info_t *compose_page(int page_num)
     page->vbo   = vertex_buffer_new( "vertex:3f,tex_coord:2f,color:4f" );
 
     int valid_t = json_index_used_tokens(page);
-    // json describe max 8 items
+    // json describe max 8 items per page
     int ret     = valid_t /NUM_OF_USER_TOKENS;
 
     // if < 8 realloc page
@@ -176,6 +176,9 @@ page_info_t *compose_page(int page_num)
         count = 0;
         for(int j = 0; j < NUM_OF_USER_TOKENS; j++)
         {
+            static char tmp[256];
+            // get the indexed token value
+            snprintf(&tmp[0], token[j].len + 1, "%s", token[j].off);
             switch(j) // print just the following:
             {
                 case NAME:        curr_font = title_font;
@@ -189,12 +192,14 @@ page_info_t *compose_page(int page_num)
                 case PV:
                 case RELEASEDATE: curr_font = stock_font;
                     break;
-                default: continue;
+                case PICPATH: {
+                    // use relative path to 'storedata' folder
+                    char *p = strstr(&tmp[0], "storedata");
+                    page->item[i].texture = load_png_asset_into_texture(p);
+                    continue; }
+                default: continue; // skip unknown names
             }
 //            printf("%d, %d: [%p]: %d\n", i, j, token[j].off, token[j].len);
-            static char tmp[256];
-            // get the indexed token value
-            snprintf(&tmp[0], token[j].len + 1, "%s", token[j].off);
             //printf("%s\n", tmp);
             texture_font_load_glyphs( curr_font, &tmp[0] );        // set textures
             /* append to VBO */

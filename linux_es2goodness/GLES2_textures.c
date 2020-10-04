@@ -70,10 +70,7 @@ static GLint u_texture_unit_location;
 static void setup_texture_position(int i, vec2 pos, const float scale_f)
 {
     vec2 p, s;
-    /* fill in some pos, and size
-        1024 /2 = 512
-        - 4 * 101 = 404
-    */
+    /* fill in some pos, and size */
     //for (int i = 0; i < NUM_OF_TEXTURES; ++i)
     {   // position in px
         p = (vec2) { 100. + i * (100. + 2. /*border*/),  
@@ -89,7 +86,6 @@ static void setup_texture_position(int i, vec2 pos, const float scale_f)
     }
 }
 
-
 //https://github.com/learnopengles/airhockey/commit/228ce050da304258feca8d82690341cb50c27532
 //OpenGLES2 handlers : init , final , update , render , touch-input
 void on_GLES2_Init_icons(int view_w, int view_h)
@@ -98,9 +94,9 @@ void on_GLES2_Init_icons(int view_w, int view_h)
 
     for(int i = 0; i < NUM_OF_TEXTURES; i++)
     {
-        texture[i] = load_png_asset_into_texture(pngs[i]);
-        if(!texture[i])
-            debugNetPrintf(DEBUG, "load_png_asset_into_texture '%s' ret: %d\n", pngs[i], texture[i]);
+//        texture[i] = load_png_asset_into_texture(pngs[i]);
+//        if(!texture[i])
+//            debugNetPrintf(DEBUG, "load_png_asset_into_texture '%s' ret: %d\n", pngs[i], texture[i]);
 
         // fill Frects with positions and sizes
         setup_texture_position( i, (vec2){ i *100, 480 /*ATTR_ORBISGL_HEIGHT*/ /2 }, 0.25 /* scale_f */);
@@ -130,23 +126,16 @@ void on_GLES2_Init_icons(int view_w, int view_h)
     glViewport(0, 0, view_w, view_h);
 }
 
+
 void on_GLES2_Final(void)
 {
     for(int i = 0; i < NUM_OF_PROGRAMS; ++i)
         { if(glsl_Program[i]) glDeleteProgram(glsl_Program[i]), glsl_Program[i] = 0; }
 }
 
-/*
-void on_GLES2_Size_icons(int view_w, int view_h)
-{
-    glViewport(0, 0, view_w, view_h);
-}
-*/
 
 void on_GLES2_Update(double time)
 {
-    //float t = (float)frame /10.; // slow down
-
     for(int i = 0; i < NUM_OF_PROGRAMS; ++i)
     {
         glUseProgram(glsl_Program[i]);
@@ -156,7 +145,8 @@ void on_GLES2_Update(double time)
     //printf("t:%.4f u_time:%.6f\n", t, frame);
 }
 
-void on_GLES2_Render_icons(int num) // which texture to draw
+
+void on_GLES2_Render_icon(GLuint texture, int num) // which texture to draw
 {
     // we already clean
 
@@ -174,8 +164,8 @@ void on_GLES2_Render_icons(int num) // which texture to draw
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // select requested texture
     glActiveTexture(GL_TEXTURE0 + num);
-    glBindTexture(GL_TEXTURE_2D, texture[num]);
-    glUniform1i(u_texture_unit_location, num);  // tell to shader
+    glBindTexture  (GL_TEXTURE_2D, texture);
+    glUniform1i    (u_texture_unit_location, num);  // tell to shader
 
     // setup positions
     const vec4 *rect = &rects[num];
