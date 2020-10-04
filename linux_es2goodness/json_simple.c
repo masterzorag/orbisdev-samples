@@ -257,12 +257,12 @@ page_info_t *compose_page(int page_num)
 }
 
 // review this
-char *get_json_token_value( int name)
+char *get_json_token_value(item_idx_t *item, int name)
 {
     //page_info_t *p = page;
     static char tmp[256];
     // get the indexed token value
-    item_idx_t *token = &page->item[selected_icon].token[name];
+    item_idx_t *token = &item[name];
 
     snprintf(&tmp[0], token->len + 1, "%s", token->off);
     //printf("%s\n", tmp);
@@ -270,11 +270,11 @@ char *get_json_token_value( int name)
 }
 
 // wrapper from outside
-void json_get_token_test(void)
+void json_get_token_test(item_idx_t *item)
 {
-    printf("%s\n", get_json_token_value(IMAGE));
+    printf("%s\n", get_json_token_value(item, IMAGE));
 
-    printf("package: %s\n", get_json_token_value(PACKAGE));
+    printf("package: %s\n", get_json_token_value(item, PACKAGE));
 }
 
 // ---------------------------------------------------------------- display ---

@@ -337,9 +337,6 @@ uint8_t updateController(uint8_t *p)
 //                  json_test();
                     break;
                 case 53: printf("Cross pressed\n");
-#if defined ES_UI
-                  json_get_token_test();
-#endif
                     break;
                 case 28: printf("Triangle pressed\n"); 
                     ls_dir("./");
@@ -357,6 +354,7 @@ uint8_t updateController(uint8_t *p)
             }
 #endif //OPENTYRIAN
 #if defined ES_UI
+            // deals with action to trigger
             GLES2_scene_on_pressed_button(xev.xkey.keycode);
 #endif
         }
