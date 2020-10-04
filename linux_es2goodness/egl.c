@@ -21,13 +21,13 @@
 
 #include "defines.h" // the parts list
 
+int  selected_icon;   // from icons.c
+//vec2 menu_pos = (.0f);
 
-extern int selected_icon;   // from icons.c
-
-int is_facing_left;  // from  sprite.c
+int  is_facing_left;  // from  sprite.c
 
 double dt = 0,  // delta time
-      u_t = 0;  // total time
+      u_t = 0;  // total time: we will use it as SL uniform
 
 const char vertex_src [] =
 "                                        \
@@ -147,14 +147,13 @@ void render()
 
     static int donesetup = 0; 
 //static XWindowAttributes gwa;
- 
-   //// draw
- //move on X11 init
+    //// draw
+    //move on X11 init
     if ( !donesetup ) {
         XWindowAttributes  gwa;
         XGetWindowAttributes ( x_display , win , &gwa );
         glViewport ( 0 , 0 , gwa.width , gwa.height );
-        glClearColor ( 0.08 , 0.06 , 0.07 , 1.);    // background color
+        glClearColor ( 0.1 , 0.1 , 0.4 , 1.);    // background color
         donesetup = 1;
    }
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -194,36 +193,35 @@ void render()
 //    render_selection_rectangle(0);
 #endif
 
+#if defined LINE_AND_RECT
+//  enable for additional pixel shader
+    es2rndr_lines_and_rect();
+    ORBIS_RenderFillRects_rndr();
+#endif
+
+#if defined MY_RECT
+    //ORBIS_RenderFillRects_rndr();
+#endif
+
 #if defined FT_DEMO
     render_text();   // freetype demo-font.c, renders text just from init_
 
-    es2rndr_text_ext(NULL);  // freetype text_ani.c, shared VBO, draw just indexed texts
-    es2updt_text_ani(1.f);
+#if defined ES_UI
+    GLES2_scene_render();
+#endif
 
-    es2rndr_fm(NULL);  // freetype text_ani.c, shared VBO, draw just indexed texts
-    es2updt_fm(1.f);
+    #if defined TEXT_ANI
+    es2rndr_text_ext(NULL);  // freetype text_ani.c, shared VBO, draw just indexed texts
+    es2updt_text_ani(u_t);
+
+    es2rndr_fm(NULL);  // freetype filemanager.c, shared VBO, draw just indexed texts
+//  es2updt_fm(1.f);
+    #endif
 
 #elif defined FT_DEMO_2
     // demo-font_2.c init
     render_text();
 
-#endif
-
-#if defined LINE_AND_RECT
-//  enable for additional pixel shader
-//  es2rndr_lines_and_rect();
-    ORBIS_RenderFillRects_rndr();
-#endif
-
-#if defined MY_RECT
-    ORBIS_RenderFillRects_rndr();
-#endif
-
-#if defined PNG_ICONS
-    /// update the time
-    on_GLES2_Update(u_t);
-    // render all textures VBOs but first one (the fullscreen one)
-    for(int i = 0; i < NUM_OF_TEXTURES; i++) on_GLES2_Render(i); // skip background
 #endif
 
 #if defined OPENTYRIAN
@@ -260,8 +258,7 @@ uint8_t updateController(uint8_t *p)
     uint8_t ret = 0;
     /* check for user input */
     while ( XPending ( x_display ) )
-    { // check for events from the x-server
-
+    {  // check for events from the x-server
        XEvent  xev;
        XNextEvent( x_display, &xev );
 
@@ -272,8 +269,7 @@ uint8_t updateController(uint8_t *p)
           GLfloat window_x  =  xev.xmotion.x - window_width / 2.0;
           norm_x            =  window_x / (window_width / 2.0);
           update_pos = true;
-
-         /* printf("%d, %d\n", xev.xmotion.x, xev.xmotion.y); */
+          /* printf("%d, %d\n", xev.xmotion.x, xev.xmotion.y); */
        }
 
        if ( xev.type == KeyPress ) 
@@ -332,15 +328,18 @@ uint8_t updateController(uint8_t *p)
               keyPressed = 116;
 #endif
                         // just on keypress
-//                update_selection_rectangle(0);
+//                  update_selection_rectangle(0);
                     break;
-
                 case 39: printf("Square pressed\n");
                /* dr_mp3_Loop("main.mp3"); */  
                     break;
-                case 54: printf("Circle pressed\n");          
+                case 54: printf("Circle pressed\n");
+//                  json_test();
                     break;
                 case 53: printf("Cross pressed\n");
+#if defined ES_UI
+                  json_get_token_test();
+#endif
                     break;
                 case 28: printf("Triangle pressed\n"); 
                     ls_dir("./");
@@ -356,8 +355,10 @@ uint8_t updateController(uint8_t *p)
                 default:  break;
                   
             }
+#endif //OPENTYRIAN
+#if defined ES_UI
+            GLES2_scene_on_pressed_button(xev.xkey.keycode);
 #endif
-            printf("selected_icon %d\n", selected_icon); 
         }
     }
     return ret;
@@ -486,6 +487,10 @@ int main(int argc, char **argv)
     // demo-font.c init
     es2init_text((int)window_width, (int)window_height);
 
+  #if defined ES_UI
+    GLES2_scene_init((int)window_width, (int)window_height);
+  #endif
+
   #if defined _SOUND_
     on_GLES2_Init_sound((int)window_width, (int)window_height);
     printf("on_GLES2_Init\n");
@@ -495,9 +500,11 @@ int main(int argc, char **argv)
     es2init_browser((int)window_width, (int)window_height); // browser
     //reshape2((int)window_width, (int)window_height);
   #endif
+  #if defined TEXT_ANI
    es2init_text_ani((int)window_width, (int)window_height); // text fx
 
-es2init_fm((int)window_width, (int)window_height); // text fx
+   es2init_fm((int)window_width, (int)window_height); // text fx
+  #endif
 
 #elif defined FT_DEMO_2
     // demo-font.c init
@@ -514,9 +521,8 @@ es2init_fm((int)window_width, (int)window_height); // text fx
     ORBIS_RenderFillRects_init((int)window_width, (int)window_height);
 #endif
 
-#if defined PNG_ICONS
+#if 0//defined PNG_ICONS
     on_GLES2_Init_icons((int)window_width, (int)window_height);
-//    printf("on_GLES2_Init\n");
     // set viewport
 //    on_GLES2_Size_icons((int)window_width, (int)window_height);
 #endif
@@ -565,7 +571,6 @@ es2init_fm((int)window_width, (int)window_height); // text fx
 //  init_selection_rectangle(window_width, window_height);
 
     // this is needed for time measuring  -->  frames per second
-//    struct timezone tz;
     struct timeval  t1, t2,
                     t3, t4; // count each passed second
     gettimeofday ( &t1 , NULL );
@@ -629,9 +634,12 @@ es2init_fm((int)window_width, (int)window_height); // text fx
     #if defined _SOUND_  
     es2fini_browser();
     #endif
+
+    #if defined TEXT_ANI
     es2fini_text_ani();
     es2fini_fm();
     es2sample_end(); // demo-font.c as last one
+    #endif
 #endif
 
 #if defined LINE_AND_RECT

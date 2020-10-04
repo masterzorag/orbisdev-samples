@@ -199,7 +199,7 @@ int InitScene_1(int i, int w, int h, const char *pShader, int binary)
                { name = strdup(pShader);
                  data = orbisFileGetFileContent(pShader); // read the shader content
                  if(data)
-                   pShader = data;
+                   pShader = (void*)data;
                } break;
         }
 

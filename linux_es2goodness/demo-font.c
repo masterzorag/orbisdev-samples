@@ -40,7 +40,7 @@
 
 #include <freetype-gl.h>  // links against libfreetype-gl
 
-#if defined (__PS4__)
+#if defined (__ORBIS__)
 
 #include <ps4sdk.h>
 #include <debugnet.h>
@@ -50,7 +50,7 @@
 #define  INFO     DEBUGNET_INFO
 
 
-#elif defined HAVE_LIBAO // on pc
+#else // on pc
 
 #include <stdio.h>
 #define  debugNetPrintf  fprintf
@@ -128,12 +128,14 @@ void render_text( void )
             vertex_buffer_render_setup( buffer, GL_TRIANGLES ); // start draw
             
             int j = selected;
-            if(framecount %17 == 0)  // sometime... 
+            if(framecount %120 == 0)  // sometime...
             {
-                 selected = framecount %num_of_texts; // ... flip text
-                 j = selected;
+                selected++;
+                j = selected %num_of_texts;
+                // selected = framecount %num_of_texts; // ... flip text
+                selected = j;
             }
-            
+            //printf("%d, %d\n", j, selected);
             //for(int j=0; j<num_of_texts; j+=1)  // draw all texts
             {
                 // draw just text[j]
@@ -161,7 +163,7 @@ void add_text( vertex_buffer_t * buffer, texture_font_t * font,
                char * text, vec4 * color, vec2 * pen )
 {
     size_t i;
-    float r = color->red, g = color->green, b = color->blue, a = color->alpha;
+    float r = color->r, g = color->g, b = color->b, a = color->a;
 
     for( i = 0; i < strlen(text); ++i )
     {
@@ -208,7 +210,7 @@ static void my_add_text( vertex_buffer_t * buffer, texture_font_t * font,
     idx->count  = vector_size( buffer->items ) - idx->offset;
     num_of_texts++;
     /* report the item info */
-    fprintf(INFO, "item[%.2d] .off: %3d, .len: %2d, buffer glyph count: %3zu, %s\n",
+    fprintf(INFO, "item[%.2d] .off: %3d, .len: %2d, buffer glyph count: %3zu, '%s'\n",
             num_of_texts, idx->offset, idx->count, vector_size( buffer->items ), text );
 }
 // ------------------------------------------------------ freetype-gl shaders ---
@@ -266,7 +268,7 @@ static GLuint CreateProgram( void )
 
 // freetype-gl pass last composed Text_Length in pixel, we use to align text!
 extern float tl;
-static texture_font_t *font = NULL;
+    texture_font_t *font = NULL;
 // ------------------------------------------------------------------- main ---
 int es2init_text (int width, int height)
 {
@@ -276,45 +278,51 @@ int es2init_text (int width, int height)
     atlas  = texture_atlas_new( 512, 512, 1 );
 
     /* load .ttf in memory */
-    void *ttf = orbisFileGetFileContent( "/hostapp/fonts/zrnic_rg.ttf" );
+//  void *ttf = orbisFileGetFileContent( "/hostapp/fonts/zrnic_rg.ttf" );
     buffer    = vertex_buffer_new( "vertex:3f,tex_coord:2f,color:4f" );
     //printf("buffer at %p, atlas at %p, atlas->id:%d\n", buffer, atlas, atlas->id);
 
-    char *text = "OrbisLinkGL demo: GL ES 2.0 shaders, FreeType";
+    char *text = "this is a DKS Studios store homebrew";
 
     int tx = 20; // text position
 
-    vec2 pen = {{100, 100}}; // init pen: 0,0 is lower left
+    vec2 pen = { 100, 100 }; // init pen: 0,0 is lower left
 
-    vec4 black = {{ 0.1, 0.1, 0.4, 1.f }}; // RGBA color
-    vec4 white = {{ 1.f, 1.f, 1.f, 1.f }}; // RGBA color
-    vec4 col   = {{ 1.f, 0.f, 0.4, 1.f }}; // RGBA color
+//    vec4 black = { 0.1, 0.1, 0.4, 1.f }; // RGBA color
+    vec4 white = { 1.f, 1.f, 1.f, 1.f }; // RGBA color
+//    vec4 col   = { 1.f, 0.f, 0.4, 1.f }; // RGBA color
 
-    font = texture_font_new_from_memory(atlas, 32, ttf, _orbisFile_lastopenFile_size);
+//  font = texture_font_new_from_memory(atlas, 24, ttf, _orbisFile_lastopenFile_size);
+    font = texture_font_new_from_memory(atlas, 24, _hostapp_fonts_zrnic_rg_ttf, _hostapp_fonts_zrnic_rg_ttf_len);
+ 
     //printf("font at %p\n", font);
 
     // 1.
-    char *s = "this sample show 2 GLSL programs:";   // set text
+    char *s = "coming before xmas :lol:";   // set text
 
     texture_font_load_glyphs( font, s );        // set textures
     pen.x = (width - tl);                       // use Text_Length to align pen.x
+    pen.x = 0,
+    pen.y = 10;
     // use outline
-	font->rendermode        = RENDER_OUTLINE_EDGE;
-    font->outline_thickness = .3f;
+//  font->rendermode        = RENDER_OUTLINE_EDGE;
+//  font->outline_thickness = .3f;
 
     my_add_text( buffer, font, s, &white, &pen, &texts[num_of_texts] );  // set vertexes
 
     // 2.
-    s = "one does background, other does text";  // set text
+    s = "System Version: 0xdeadcafe";  // set text
 
     texture_font_load_glyphs( font, s );        // set textures
     pen.x  = (width - tl);                      // use Text_Length to align pen.x
     pen.y -= font->height;                      // 1 line down!
+    pen.x = 10,
+    pen.y = height - font->height;
     my_add_text( buffer, font, s, &white, &pen, &texts[num_of_texts] );  // set vertexes
 
     texture_font_delete( font );    // end with font, cleanup
 
-    if(1)
+#if 0
     {
         ttf  = orbisFileGetFileContent("/hostapp/fonts/razors.ttf");
         font = texture_font_new_from_memory(atlas, 36, ttf, _orbisFile_lastopenFile_size);
@@ -325,7 +333,7 @@ int es2init_text (int width, int height)
         
         /*font->rendermode = RENDER_OUTLINE_POSITIVE;
         font->outline_thickness = 2;*/
-		font->rendermode        = RENDER_OUTLINE_EDGE;
+        font->rendermode        = RENDER_OUTLINE_EDGE;
         font->outline_thickness = 1.;
         my_add_text( buffer, font, s, &black, &pen, &texts[num_of_texts] );  // set vertexes
 
@@ -336,13 +344,14 @@ int es2init_text (int width, int height)
 
         texture_font_delete( font );   // end with font, cleanup
     }
+#endif
 
-    ttf   = orbisFileGetFileContent("/hostapp/fonts/zrnic_rg.ttf");
+//    ttf   = orbisFileGetFileContent("/hostapp/fonts/zrnic_rg.ttf");
     pen.y = 400;
     for( h=16; h < 24; h += 2)
     {
-        font = texture_font_new_from_memory(atlas, h, ttf, _orbisFile_lastopenFile_size);
-
+//      font = texture_font_new_from_memory(atlas, h, ttf, _orbisFile_lastopenFile_size);
+        font = texture_font_new_from_memory(atlas, h, _hostapp_fonts_zrnic_rg_ttf, _hostapp_fonts_zrnic_rg_ttf_len);
         //printf("font at %p\n", font);
         pen.x  = tx;
         pen.y -= font->height;  // reset pen, 1 line down

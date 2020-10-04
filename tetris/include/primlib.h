@@ -2,6 +2,10 @@
 //#include <SDL.h>
 //#include <SDL2_gfxPrimitives.h>
 
+// Clang Extended Vectors
+typedef float vec2 __attribute__((ext_vector_type(2)));
+typedef float vec4 __attribute__((ext_vector_type(4)));
+
 int initGraph(char *title);
 
 void freeResources();
@@ -21,3 +25,8 @@ int screenWidth();
 int screenHeight();
 
 int getKey();
+
+//vec2 px_pos_to_normalized(vec2 *pos, vec2 *size);
+vec4 px_pos_to_normalized2(vec2 *pos, vec2 *size);
+void ORBIS_RenderDrawLines(const vec2 *points, int count);
+void ORBIS_RenderFillRects(const vec4 *rects,  int count);

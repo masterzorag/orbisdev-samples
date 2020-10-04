@@ -40,7 +40,7 @@ enum ani_type_num
 typedef struct
 {
 // GLuint program;
-    int   status, // current ani_states
+    int   status, // current ani_status
           fcount; // current framecount
 
     float life;   // total duration in frames

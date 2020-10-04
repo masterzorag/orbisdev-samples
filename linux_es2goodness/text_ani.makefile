@@ -26,7 +26,7 @@ OBJ      := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 CC       := clang
 CPPFLAGS := 
-CFLAGS   := -Wall -O3 -DFT_DEMO -DHAVE_LIBAO -DGLSLSANDBOX -ggdb
+CFLAGS   := -Wall -O3 -DFT_DEMO -DTEXT_ANI -DHAVE_LIBAO -DGLSLSANDBOX -ggdb
 
 # where libs are?
 #LDFLAGS  :=	-L/home/user/Downloads/liborbis/portlibs/MiniAPI/lib -lMiniAPI

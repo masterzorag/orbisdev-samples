@@ -16,7 +16,10 @@ EXE := egl_demo_my_rects
 SRC_DIR  := $(ORBISDEV)/../orbisdev-portlibs/freetype-gl/source
 #SRC_DIR  += /home/user/Documents/orbisdev-portlibs/MiniAPI/source
 #SRC_DIR := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
-SRC      := egl.c fileIO.c shader_common.c GLES2_rects.c png.c GLES2_textures.c ls_dir.c
+SRC      := egl.c fileIO.c shader_common.c ls_dir.c demo-font.c
+SRC      += GLES2_rects.c png.c GLES2_textures.c GLES2_ani.c GLES2_scene.c
+SRC      += pixelshader.c
+SRC      += jsmn.c json_simple.c
 #			/home/user/Documents/orbisdev-liborbis/source/liborbisAudio/orbisAudio.c
 SRC      += $(wildcard $(SRC_DIR)/*.c)
 
@@ -25,7 +28,7 @@ OBJ      := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 CC       := clang
 CPPFLAGS := 
-CFLAGS   := -Wall -O3 -DMY_RECT -DPNG_ICONS -ggdb
+CFLAGS   := -Wall -O3 -DMY_RECT -DPNG_ICONS -DFT_DEMO -DES_UI -ggdb
 
 # where libs are?
 #LDFLAGS  :=	-L/home/user/Downloads/liborbis/portlibs/MiniAPI/lib -lMiniAPI

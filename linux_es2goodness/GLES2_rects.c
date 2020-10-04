@@ -14,34 +14,43 @@ typedef float vec4 __attribute__((ext_vector_type(4)));
 /* simple shaders */
 static const char *vs =
     "precision mediump float;"
-    "attribute vec4 a_Position;"
-    "uniform   vec4 u_color;"
-    //use your own output instead of gl_FrontColor
+    "attribute vec4    a_Position;"
+    "uniform   vec4    u_color;"
+    "uniform   float   u_time;"
+    // use your own output instead of gl_FrontColor
     "varying   vec4 fragColor;"
     ""
     "void main(void)"
     "{"
-    "  fragColor   = u_color;"
-    "  gl_Position = a_Position;"
+    "  fragColor    = u_color;"
+    "  gl_Position  = a_Position;"
+    // apply a little of zooming
+    "  gl_Position.w -= ( abs(sin(u_time)) * .007 );"
     "}";
 
 static const char *fs =
 /// 1. use passed u_color
     "precision mediump float;"
     "varying   vec4    fragColor;"
+    "uniform   float   u_time;"
     ""
     "void main(void)"
     "{"
-    "  gl_FragColor = fragColor;"
+    "  gl_FragColor    = fragColor;"
+    "  gl_FragColor.a *= abs(sin(u_time));"
     "}";
 
 static GLuint simpleProgram = 0;
-static vec2   resolution;
-       vec4   color = { 1., 0., .5, 1. }; // current RGBA color
+extern vec2   resolution;
+static vec4   color = { 1., 0., .5, 1. }; // current RGBA color
 // shaders locations
 static GLint  a_position_location;
 static GLint  u_color_location;
+static GLint  u_time_location;
 
+extern double u_t; // main.c
+extern int selected_icon; // from main.c
+/*
 typedef struct
 {
     float x;
@@ -55,18 +64,22 @@ typedef struct
     float x;
     float y;
 } SDL_FRect;
-
+*/
 typedef vec2  my_Point;
 typedef vec4  my_FRect; // ( p1.xy, p2.xy )
 
-extern int selected_icon;   // from icons.c
+#define COUNT  8
+/* vec4 */ my_FRect r[COUNT]; //
+
 
 // takes point count
-int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
+void ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     const vec2 *points, int count)
 {
     GLfloat vertices[4];
     int idx;
+
+//simpleProgram = glsl_Program[TEXTURED];
 
     glUseProgram(simpleProgram);
     //glDisable(GL_CULL_FACE);
@@ -91,6 +104,8 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
         glEnableVertexAttribArray(a_position_location);
         /* write color to use to the shader location */
         glUniform4f(u_color_location, color.r, color.g, color.b, color.a);
+
+        glUniform1f(u_time_location, u_t);
         /* floats pairs for points from 0-4 */
         glDrawArrays(GL_LINES, 0, 2);
     }
@@ -98,13 +113,28 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
     glDisable(GL_BLEND);
     // release VBO, texture and program
     glUseProgram(0);
-
-    return 0;
 }
 
-int ORBIS_RenderFillRects(
-    // SDL_Renderer *renderer,
-    const my_FRect *rects, int count)
+void ORBIS_RenderDrawBox(const vec4 *r)
+{
+    /* draw a white box around selected rect */
+    vec4 curr_color = color;
+    // vector splat 1 -> set white
+    color = (vec4) ( 1. );
+    // a box is 4 segments joining 2 points
+    vec2 b[4 * 2];
+    // 1 line for each 2 points
+    b[0] = r->xy,  b[1] = r->xw;
+    b[2] = r->xw,  b[3] = r->zw;
+    b[4] = r->zw,  b[5] = r->zy;
+    b[6] = r->zy,  b[7] = r->xy;
+
+    ORBIS_RenderDrawLines(&b[0], 8);
+    // restore current color
+    color = curr_color;
+}
+
+void ORBIS_RenderFillRects(const vec4 *rects, int count)
 {
     GLfloat vertices[8]; // (4 float pairs!)
 
@@ -139,8 +169,6 @@ int ORBIS_RenderFillRects(
     glDisable(GL_BLEND);
     // release VBO, texture, program, ...
     glUseProgram(0);
-
-    return 0;
 }
 
 void ORBIS_RenderFillRects_init( int width, int height )
@@ -153,11 +181,12 @@ void ORBIS_RenderFillRects_init( int width, int height )
     // gles2 attach shader locations
     a_position_location = glGetAttribLocation (simpleProgram, "a_Position");
     u_color_location    = glGetUniformLocation(simpleProgram, "u_color");
+    u_time_location     = glGetUniformLocation(simpleProgram, "u_time");
     // reshape
     glViewport(0, 0, width, height);
 }
 
-// useless
+// old way, tetris uses it
 vec4 px_pos_to_normalized2(vec2 *pos, vec2 *size)
 {
     vec4 n; // 2 points .xy pair: (x, y),  (x + texture.w, y + texture.h)
@@ -179,17 +208,15 @@ vec2 px_pos_to_normalized(vec2 *pos)
     return n;
 }
 
-#define COUNT  8
 void ORBIS_RenderFillRects_rndr(void)
 {
-    my_FRect r[COUNT];
     vec2 s;
     // fill in some pos, and size
     for (int i = 0; i < COUNT; ++i)
     {
         // position in px
-        vec2 p = (vec2) { 32. + i * (100. + 1. /*border*/),  
-                         100. + 4 *  20. };
+        vec2 p = (vec2) { 100. + i * (100. + 2. /*border*/),  
+                          100. + 4 *  20. };
         /* convert to normalized coordinates */
         r[i].xy = px_pos_to_normalized(&p);
         // size in px
@@ -213,7 +240,7 @@ void ORBIS_RenderFillRects_rndr(void)
     p[1].x = -.2, p[1].y = .6;
     ORBIS_RenderDrawLines(&p[0], 2);
 
-
+#if 0
     /* draw a white box around selected rect */
     vec4 curr_color = color;
     // vector splat 1 -> set white
@@ -230,9 +257,12 @@ void ORBIS_RenderFillRects_rndr(void)
     ORBIS_RenderDrawLines(&b[0], 8);
     // restore current color
     color = curr_color;
-
+#else
+    //ORBIS_RenderDrawBox(&r[i]);
+#endif
     /* ... */
 }
+
 
 void ORBIS_RenderFillRects_fini(void)
 {

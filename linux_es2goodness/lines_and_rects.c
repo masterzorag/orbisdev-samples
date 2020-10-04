@@ -5,6 +5,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <freetype-gl.h>  // links against libfreetype-gl
 
@@ -12,15 +13,18 @@
 
 // ------------------------------------------------------- typedef & struct ---
 typedef struct {
-    float x, y, z;  // position
-    vec4 color;     // RGBA color
+    float x, y, z;    // position (3f)
+//    float s, t;       // texture  (2f)
+    float r, g, b, a; // color    (4f)
 } vertex_t;
 
+typedef  vertex_t  point_t;
+/*
 typedef struct {
     float x, y, z;
     vec4 color;
 } point_t;
-
+*/
 
 // ------------------------------------------------------- global variables ---
 texture_atlas_t *atlas;
@@ -116,15 +120,15 @@ extern float tl;
 // ------------------------------------------------------------------- init ---
 void es2init_lines_and_rect( int width, int height )
 {
-    vec4 blue  = {{ 0,0,1,1 }};
-    vec4 black = {{ 0,0,0,1 }};
+//    vec4 blue  = { 0,0,1,1 };
+    vec4 color = { 1,0,0,1 };
     /* load .ttf in memory */
     void *ttf  = orbisFileGetFileContent("/hostapp/fonts/zrnic_rg.ttf");
 
     atlas = texture_atlas_new( 512, 512, 1 );
     texture_font_t *big   = texture_font_new_from_memory(atlas, 400, ttf, _orbisFile_lastopenFile_size);
-    texture_font_t *small = texture_font_new_from_memory(atlas,  18, ttf, _orbisFile_lastopenFile_size);
-    texture_font_t *title = texture_font_new_from_memory(atlas,  32, ttf, _orbisFile_lastopenFile_size);
+//  texture_font_t *small = texture_font_new_from_memory(atlas,  18, ttf, _orbisFile_lastopenFile_size);
+//  texture_font_t *title = texture_font_new_from_memory(atlas,  32, ttf, _orbisFile_lastopenFile_size);
 
     text_buffer  = vertex_buffer_new( "vertex:3f,tex_coord:2f,color:4f" );
     line_buffer  = vertex_buffer_new( "vertex:3f,color:4f" );
@@ -136,62 +140,65 @@ void es2init_lines_and_rect( int width, int height )
     texture_glyph_t *glyph  = texture_font_get_glyph( big, "g" );
     origin.x = width /2 - glyph->offset_x - glyph->width /2;
     origin.y = height/2 - glyph->offset_y + glyph->height/2;
-//    add_text( text_buffer, big, "g", &black, &origin );
+//  add_text( text_buffer, big, "g", &black, &origin );
 
     // title
     pen.x = 50;
     pen.y = height - 50;
-//    add_text( text_buffer, title, "Glyph metrics", &black, &pen );
+//  add_text( text_buffer, title, "Glyph metrics", &black, &pen );
+
+//printf("origin:%f %f, %f %f\n", origin.x, origin.y, origin.x, origin.y);
+    float r = color.r, g = color.g, b = color.b, a = color.a;
 
     // lines
     point_t vertices[] =
         {   // Baseline
-            {0.1*width, origin.y, 0, black},
-            {0.9*width, origin.y, 0, black},
+            {0.1*width, origin.y, 0,  r,g,b,a },
+            {0.9*width, origin.y, 0,  r,g,b,a },
 
             // Top line
-            {0.1*width, origin.y + glyph->offset_y, 0, black},
-            {0.9*width, origin.y + glyph->offset_y, 0, black},
+            {0.1*width, origin.y + glyph->offset_y, 0,  r,g,b,a},
+            {0.9*width, origin.y + glyph->offset_y, 0,  r,g,b,a},
 
             // Bottom line
-            {0.1*width, origin.y + glyph->offset_y - glyph->height, 0, black},
-            {0.9*width, origin.y + glyph->offset_y - glyph->height, 0, black},
+            {0.1*width, origin.y + glyph->offset_y - glyph->height, 0,  r,g,b,a},
+            {0.9*width, origin.y + glyph->offset_y - glyph->height, 0,  r,g,b,a},
 
             // Left line at origin
-            {width/2-glyph->offset_x-glyph->width/2, 0.1*height, 0, black},
-            {width/2-glyph->offset_x-glyph->width/2, 0.9*height, 0, black},
+            {width/2-glyph->offset_x-glyph->width/2, 0.1*height, 0,  r,g,b,a},
+            {width/2-glyph->offset_x-glyph->width/2, 0.9*height, 0,  r,g,b,a},
 
             // Left line
-            {width/2 - glyph->width/2, .3*height, 0, black},
-            {width/2 - glyph->width/2, .9*height, 0, black},
+            {width/2 - glyph->width/2, .3*height, 0,  r,g,b,a},
+            {width/2 - glyph->width/2, .9*height, 0,  r,g,b,a},
 
             // Right line
-            {width/2 + glyph->width/2, .3*height, 0, black},
-            {width/2 + glyph->width/2, .9*height, 0, black},
+            {width/2 + glyph->width/2, .3*height, 0,  r,g,b,a},
+            {width/2 + glyph->width/2, .9*height, 0,  r,g,b,a},
 
             // Right line at origin
-            {width/2-glyph->offset_x-glyph->width/2+glyph->advance_x, 0.1*height, 0, black},
-            {width/2-glyph->offset_x-glyph->width/2+glyph->advance_x, 0.7*height, 0, black},
+            {width/2-glyph->offset_x-glyph->width/2+glyph->advance_x, 0.1*height, 0,  r,g,b,a},
+            {width/2-glyph->offset_x-glyph->width/2+glyph->advance_x, 0.7*height, 0,  r,g,b,a},
 
             // Width
-            {width/2 - glyph->width/2, 0.8*height, 0, blue},
-            {width/2 + glyph->width/2, 0.8*height, 0, blue},
+            {width/2 - glyph->width/2, 0.8*height, 0,  r,g,b,a},
+            {width/2 + glyph->width/2, 0.8*height, 0,  r,g,b,a},
 
             // Advance_x
-            {width/2-glyph->width/2-glyph->offset_x, 0.2*height, 0, blue},
-            {width/2-glyph->width/2-glyph->offset_x+glyph->advance_x, 0.2*height, 0, blue},
+            {width/2-glyph->width/2-glyph->offset_x, 0.2*height, 0,  r,g,b,a},
+            {width/2-glyph->width/2-glyph->offset_x+glyph->advance_x, 0.2*height, 0,  r,g,b,a},
 
             // Offset_x
-            {width/2-glyph->width/2-glyph->offset_x, 0.85*height, 0, blue},
-            {width/2-glyph->width/2, 0.85*height, 0, blue},
+            {width/2-glyph->width/2-glyph->offset_x, 0.85*height, 0,  r,g,b,a},
+            {width/2-glyph->width/2, 0.85*height, 0,  r,g,b,a},
 
             // Height
-            {0.3*width/2, origin.y + glyph->offset_y - glyph->height, 0, blue},
-            {0.3*width/2, origin.y + glyph->offset_y, 0, blue},
+            {0.3*width/2, origin.y + glyph->offset_y - glyph->height, 0,  r,g,b,a},
+            {0.3*width/2, origin.y + glyph->offset_y, 0,  r,g,b,a},
 
             // Offset y
-            {0.8*width, origin.y + glyph->offset_y, 0, blue},
-            {0.8*width, origin.y , 0, blue},
+            {0.8*width, origin.y + glyph->offset_y, 0,  r,g,b,a},
+            {0.8*width, origin.y , 0,  r,g,b,a},
 
         };
     GLuint indices [] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,
@@ -201,7 +208,10 @@ void es2init_lines_and_rect( int width, int height )
     // points
     GLuint i = 0;
     point_t p;
-    p.color = black;
+    p.r = r,
+    p.g = g,
+    p.b = b,
+    p.a = a;
 
     // Origin point
     p.x = width/2  - glyph->offset_x - glyph->width/2;
@@ -215,7 +225,7 @@ void es2init_lines_and_rect( int width, int height )
 
 
 #if 1 // rects
-vec4 color = {{ 1., 1., 1., 1. }};
+//vec4 color = { 1., 1., 1., 1. };
 for (int i = 0; i < 10; ++i)
 {
     int  x0 = (int)( pen.x + i * 2 );
@@ -225,11 +235,11 @@ for (int i = 0; i < 10; ++i)
 
     GLuint indices2[6] = {0,1,2,  0,2,3}; // (two triangles)
 
-    /* VBO is setup as: "vertex:3f, vec4 color */ 
-    vertex_t vertices2[4] = { { x0,y0,0,  color },
-                              { x0,y1,0,  color },
-                              { x1,y1,0,  color },
-                              { x1,y0,0,  color } };
+    /* VBO is setup as: "vertex:3f, color:4f */
+    vertex_t vertices2[4] = { { x0,y0,0,  r,g,b,a },
+                              { x0,y1,0,  r,g,b,a },
+                              { x1,y1,0,  r,g,b,a },
+                              { x1,y0,0,  r,g,b,a } };
     vertex_buffer_push_back( rects_buffer, vertices2, 4, indices2, 6 );
     pen.x   += 72.;
     pen.y   -= 32.;

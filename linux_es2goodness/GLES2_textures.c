@@ -22,7 +22,7 @@
     0. use default color from texture
     1. use glowing effect on passed time
 */
-enum programs
+enum GLSL_programs
 {
     TEXTURED,
     GLOWING,
@@ -56,40 +56,36 @@ char *pngs[NUM_OF_TEXTURES] =
 static vec4 rects[NUM_OF_TEXTURES];
 
 // the png we apply glowing effect by switching shader
-int selected_icon = 0;
+extern int selected_icon;
 
 // shaders locations
 static GLint a_position_location;
 static GLint a_texture_coordinates_location;
 static GLint u_texture_unit_location;
-static GLint u_time_location;
+       GLint u_time_location;
 
-extern vec2 resolution;  // (shared and constant!)
+       vec2 resolution;  // (shared and constant!)
 
+// fill all our "rects" info with normalized coordinates
 static void setup_texture_position(int i, vec2 pos, const float scale_f)
 {
-    // fill all our "rects" info with normalized coordinates
-    vec2 s;
-    // fill in some pos, and size
+    vec2 p, s;
+    /* fill in some pos, and size
+        1024 /2 = 512
+        - 4 * 101 = 404
+    */
     //for (int i = 0; i < NUM_OF_TEXTURES; ++i)
     {   // position in px
-        vec2 p = (vec2) { 32. + i * (100. + 1. /*border*/),  
-                         100. + 4 *  20. },
+        p = (vec2) { 100. + i * (100. + 2. /*border*/),  
+                     100. + 4 *  20. },
         /* convert to normalized coordinates */
-        n = px_pos_to_normalized(&p);
-//     printf("- n(%f, %f)\n", n.x, n.y);
-        //r[i].x = n.x, r[i].y = n.y;
-        rects[i].xy = n;
+        rects[i].xy = px_pos_to_normalized(&p);
         // size in px
         s  = (vec2) { 100.,  100. };
         // turn size into a second point
         s += p;
         /* convert to normalized coordinates */
-        n  = px_pos_to_normalized(&s);
-        //r[i].w = n.x - r[i].x, r[i].h = n.y - r[i].y;
-        rects[i].zw = n;
-//         printf("s %d: %.f %.f %.f %.f\n", i, rects[i].x,
-//            rects[i].y, rects[i].z, rects[i].w);
+        rects[i].zw = px_pos_to_normalized(&s);
     }
 }
 
@@ -98,7 +94,7 @@ static void setup_texture_position(int i, vec2 pos, const float scale_f)
 //OpenGLES2 handlers : init , final , update , render , touch-input
 void on_GLES2_Init_icons(int view_w, int view_h)
 {
-    //resolution = (vec2){ view_w, view_h }; // setup resolution for next setup_texture_position()
+    resolution = (vec2){ view_w, view_h }; // setup resolution for next setup_texture_position()
 
     for(int i = 0; i < NUM_OF_TEXTURES; i++)
     {
@@ -106,6 +102,7 @@ void on_GLES2_Init_icons(int view_w, int view_h)
         if(!texture[i])
             debugNetPrintf(DEBUG, "load_png_asset_into_texture '%s' ret: %d\n", pngs[i], texture[i]);
 
+        // fill Frects with positions and sizes
         setup_texture_position( i, (vec2){ i *100, 480 /*ATTR_ORBISGL_HEIGHT*/ /2 }, 0.25 /* scale_f */);
     }
 
@@ -113,7 +110,7 @@ void on_GLES2_Init_icons(int view_w, int view_h)
     {
         glsl_Program[i] =
         #if 1 // defined HAVE_SHACC
-            BuildProgram(simpleVertexShader, simpleFragmentShader[i]);
+            BuildProgram(simpleVertexShader[0], simpleFragmentShader[i]);
         #else
             CreateProgramFromBinary(i);
         #endif
@@ -146,7 +143,7 @@ void on_GLES2_Size_icons(int view_w, int view_h)
 }
 */
 
-void on_GLES2_Update(double frame)
+void on_GLES2_Update(double time)
 {
     //float t = (float)frame /10.; // slow down
 
@@ -154,19 +151,19 @@ void on_GLES2_Update(double frame)
     {
         glUseProgram(glsl_Program[i]);
         // write the value to the shaders
-        glUniform1f(glGetUniformLocation(glsl_Program[i], "u_time"), frame);
+        glUniform1f(glGetUniformLocation(glsl_Program[i], "u_time"), time);
     }
     //printf("t:%.4f u_time:%.6f\n", t, frame);
 }
 
-void on_GLES2_Render(int num) // which texture to draw
+void on_GLES2_Render_icons(int num) // which texture to draw
 {
     // we already clean
 
     // set default shader
     curr_Program = glsl_Program[TEXTURED];
     // change shader if item selected
-    if(num == selected_icon) curr_Program = glsl_Program[GLOWING];
+//    if(num == selected_icon) curr_Program = glsl_Program[GLOWING];
 
     glUseProgram(curr_Program);
 
@@ -182,8 +179,16 @@ void on_GLES2_Render(int num) // which texture to draw
 
     // setup positions
     const vec4 *rect = &rects[num];
-       GLfloat  xMin = rect->x,  xMax = rect->z,
-                yMin = rect->y,  yMax = rect->w;
+
+    vec4 r;// = (vec4) { .2, .2, .3, .3 };
+    if(num == selected_icon)
+    {
+        r    = *rect;
+        //r   *= 1.15;
+        rect = &r;
+    }
+    GLfloat  xMin = rect->x,  xMax = rect->z,
+             yMin = rect->y,  yMax = rect->w;
     //printf("%d: %.f %.f %.f %.f\n", num, xMin, xMax, yMin, yMax);
     /* (x, y) for 4 points: 8 vertices */
     const float v_pos[] = { xMin, yMin,   // TPLF
@@ -213,3 +218,8 @@ void on_GLES2_Render(int num) // which texture to draw
     // we already flip/swap
 }
 
+void on_GLES2_Render_box(int num)
+{
+    // pass the selected
+    ORBIS_RenderDrawBox(&rects[num]);
+}

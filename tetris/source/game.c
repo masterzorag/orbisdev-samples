@@ -14,9 +14,6 @@ Audio *music2;
 Audio *music3;
 */
 
-// Clang Extended Vectors
-typedef float vec2 __attribute__((ext_vector_type(2)));
-
 /* Global variables */
 vec2 v_res; // externed
 bool playing;

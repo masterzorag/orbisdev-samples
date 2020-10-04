@@ -57,8 +57,7 @@ typedef struct
 } SDL_FRect;
 
 // takes point count
-int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
-    const SDL_FPoint *points, int count)
+void ORBIS_RenderDrawLines(const vec2 *points, int count)
 {
     GLfloat vertices[4];
     int idx;
@@ -73,8 +72,8 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
 
     /* emit a line for each point pair */
     for (idx = 0; idx <= count /2; idx+=2) {
-        const SDL_FPoint *p1 = &points[idx   ],
-                         *p2 = &points[idx +1];
+        const vec2 *p1 = &points[idx   ],
+                   *p2 = &points[idx +1];
         //printf("%f,%f,%f,%f\n", p1->x, p1->y, p2->x, p2->y);
         /* (x, y) for 2 points: 4*/
         vertices[0] = p1->x;  vertices[1] = p1->y;
@@ -93,13 +92,9 @@ int ORBIS_RenderDrawLines(//SDL_Renderer *renderer,
 
     // release VBO, texture and program
     glUseProgram(0);
-
-    return 0;
 }
 
-int ORBIS_RenderFillRects(
-    // SDL_Renderer *renderer,
-    const SDL_FRect *rects, int count)
+void ORBIS_RenderFillRects(const vec4 *rects, int count)
 {
     GLfloat vertices[8];
     int idx;
@@ -114,10 +109,10 @@ int ORBIS_RenderFillRects(
 
     /* emit a triangle strip for each rectangle */
     for (idx = 0; idx < count; ++idx) {
-        const SDL_FRect *rect = &rects[idx];
+        const vec4 *rect = &rects[idx];
 
-        GLfloat xMin = rect->x,  xMax = (rect->x + rect->w),
-                yMin = rect->y,  yMax = (rect->y + rect->h);
+        GLfloat xMin = rect->x,  xMax = (rect->x + rect->z),
+                yMin = rect->y,  yMax = (rect->y + rect->w);
         /* (x, y) for 4 points: 8*/
         vertices[0] = xMin;  vertices[1] = yMin;
         vertices[2] = xMax;  vertices[3] = yMin;
@@ -137,8 +132,6 @@ int ORBIS_RenderFillRects(
 
     // release VBO, texture and program
     glUseProgram(0);
-
-    return 0;
 }
 
 void ORBIS_RenderFillRects_init( int width, int height )
@@ -156,7 +149,7 @@ void ORBIS_RenderFillRects_init( int width, int height )
 }
 
 
-vec4 px_pos_to_normalized(vec2 *pos, vec2 *size)
+vec4 px_pos_to_normalized2(vec2 *pos, vec2 *size)
 {
     vec4 n; // 2 points .xy pair: (x, y),  (x + texture.w, y + texture.h)
 
@@ -167,7 +160,7 @@ vec4 px_pos_to_normalized(vec2 *pos, vec2 *size)
     return n;
 }
 
-vec2 px_pos_to_normalized2(vec2 *pos)
+vec2 px_pos_to_normalized(vec2 *pos)
 {
     vec2 n; // 2 points .xy pair: (x, y)
 
@@ -180,21 +173,21 @@ vec2 px_pos_to_normalized2(vec2 *pos)
 #define COUNT  6
 void ORBIS_RenderFillRects_rndr(void)
 {
-    SDL_FRect r[COUNT];
-    vec2 n, s;
+    vec4 r[COUNT];
+    vec2 s;
     // fill in some pos, size
     for (int i = 0; i < COUNT; ++i)
     {
         vec2 p = (vec2) { 100. + i * 20.,  100. + i * 20. },  // position in px
         /* convert to normalized coordinates */
-        n = px_pos_to_normalized2(&p);
+        n = px_pos_to_normalized(&p);
         r[i].x = n.x, r[i].y = n.y;
 
         s  = (vec2) { 10. + i * 10,  10. + i * 20. };  // size in px
         s += p;
         /* convert to normalized coordinates */
-        n  = px_pos_to_normalized2(&s);
-        r[i].w = n.x - r[i].x, r[i].h = n.y - r[i].y;
+        n  = px_pos_to_normalized(&s);
+        r[i].z = n.x - r[i].x, r[i].w = n.y - r[i].y;
     }
     // gles render all rects
     ORBIS_RenderFillRects(r, COUNT);
@@ -205,7 +198,7 @@ void ORBIS_RenderFillRects_rndr(void)
 #endif
 
 // test lines
-    SDL_FPoint p[2];
+    vec2 p[2];
     p[0].x = -.4, p[0].y = .4;
     p[1].x = -.2, p[1].y = .6;
     ORBIS_RenderDrawLines(&p[0], 2);
