@@ -27,7 +27,7 @@ varying float frame;
 
 void main(void)
 {
-    float a      = 1.;//texture2D(texture, vTexCoord).a;
+    float a      = texture2D(texture, vTexCoord).a;
     float step   = frame / meta.z;
     vec4  c1     = vec4( fragColor.rgb, fragColor.a*a );
         //c0     = vec4( c1.rgb, clamp(step, 0., c1.a ));
@@ -44,8 +44,8 @@ void main(void)
     }
     if(meta.y >= .2) // DEFAULT
     {
-        if(meta.w == .2 ) { gl_FragColor.rgb = vec3(.0, .2, 1.); }
-        if(meta.w == .3 ) { gl_FragColor.a   = clamp(abs(sin(meta.x * .1)),
+        if(meta.w == .2 ) { gl_FragColor.rgb = vec3(.7, .2, 4.); }
+        if(meta.w == .3 ) { gl_FragColor.a   = clamp(abs(sin(meta.x * 2.5)),
                                                      0., c1.a); }
         return; }
 

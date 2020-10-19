@@ -36,9 +36,10 @@ typedef struct
 {
 // GLuint program;
     int   status, // current ani_status
-          fcount; // current framecount
+          fcount; // current framecount (depr.)
 
-    float life;   // total duration in frames
+    float t_now,   // current time
+          t_life;  // total duration
 } fx_entry_t;
 
 

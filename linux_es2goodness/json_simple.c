@@ -81,7 +81,7 @@ static int json_index_used_tokens(page_info_t *page)
     jsmn_init(&p);
     r = jsmn_parse(&p, json_data, strlen(json_data), t,
                              sizeof(t) / sizeof(t[0]));
-    printf("%d\n", r);
+//  printf("%d\n", r);
     if (r < 0) { printf("Failed to parse JSON: %d\n", r); return -1; }
 
     item_idx_t *token = NULL;
@@ -120,10 +120,12 @@ static int json_index_used_tokens(page_info_t *page)
 // freetype-gl pass last composed Text_Length in pixel, we use to align text!
 extern float tl;
 
-static page_info_t *page = NULL;
+//static page_info_t *page = NULL;
 
 void destroy_page(page_info_t *page)
 {
+    if(!page) return;
+
     for(int i = 0; i < NUM_OF_TEXTURES; i++)
     {
         if(page->item[i].texture) glDeleteTextures(1, &page->item[i].texture);
@@ -136,6 +138,40 @@ void destroy_page(page_info_t *page)
     if(page) free(page), page = NULL;
 }
 
+// dummmy, to catch my GL bug
+void refresh_atlas()
+{
+    printf("* atlas to gpu *\n");
+  //glUseProgram   ( shader );
+    // setup state
+    //glActiveTexture( GL_TEXTURE0 );
+
+  if(1)//(page_num > num_of_pages)
+  {
+    //printf("to gpu!\n");
+    /* discard old texture, we eventually added glyphs! */
+    if(atlas->id) glDeleteTextures(1, &atlas->id), atlas->id = 0;
+
+    /* re-create texture and upload atlas into gpu memory */
+    glGenTextures  ( 1, &atlas->id );
+    glBindTexture  ( GL_TEXTURE_2D, atlas->id );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexImage2D   ( GL_TEXTURE_2D, 0, GL_ALPHA, atlas->width, atlas->height,
+                                    0, GL_ALPHA, GL_UNSIGNED_BYTE, atlas->data );
+  }
+}
+
+texture_font_t *stock_font = NULL;
+texture_font_t *title_font = NULL;
+texture_font_t *curr_font  = NULL;
+/*
+    we are counting pages once, so we cache the available ones
+    from caller
+*/
+extern int num_of_pages;
 // this draws the page layout:
 // texts from indexed json token name, value
 page_info_t *compose_page(int page_num)
@@ -147,9 +183,10 @@ page_info_t *compose_page(int page_num)
     char json_file[128];
     sprintf(&json_file[0], "homebrew-page%d.json", page_num);
 
+    page->page_num  = page_num;
     page->json_data = (void*)orbisFileGetFileContent(&json_file[0]);
 
-    if(!page->json_data) { free(page); return NULL; }
+    if(!page->json_data) { free(page), page = NULL; return NULL; }
 
     page->vbo   = vertex_buffer_new( "vertex:3f,tex_coord:2f,color:4f" );
 
@@ -158,21 +195,34 @@ page_info_t *compose_page(int page_num)
     int ret     = valid_t /NUM_OF_USER_TOKENS;
 
     // if < 8 realloc page
-    printf("%d\n", ret);
-
-    texture_font_t
-    *stock_font = texture_font_new_from_memory(atlas, 17, _hostapp_fonts_zrnic_rg_ttf, 
-                                                          _hostapp_fonts_zrnic_rg_ttf_len),
-    *title_font = texture_font_new_from_memory(atlas, 30, _hostapp_fonts_zrnic_rg_ttf, 
-                                                          _hostapp_fonts_zrnic_rg_ttf_len),
-    *curr_font  = NULL;
+    //printf("%d\n", ret);
+    if(!stock_font)
+        stock_font = texture_font_new_from_memory(atlas, 17, _hostapp_fonts_zrnic_rg_ttf, 
+                                                             _hostapp_fonts_zrnic_rg_ttf_len);
+    if(!title_font)
+        title_font = texture_font_new_from_memory(atlas, 30, _hostapp_fonts_zrnic_rg_ttf, 
+                                                             _hostapp_fonts_zrnic_rg_ttf_len);
     // now prepare all the texts textures, use indexed json_data
     int count;
     for(int i = 0; i < ret; i++)
-    {//        printf("== entry %d ==\n", i);
+    {
+        // compute item origin position, in px
+        page->item[i].origin = (vec2)
+        {
+            100. +         i * (128. + 10. /* border between icons */),
+            155. + (128+155) * (page->page_num %2 /* rows in a page */)
+        };
+        // fill item frect with origin position and icon size, in px
+        page->item[i].frect.xy = page->item[i].origin;
+        page->item[i].frect.zw = (vec2) ( 128 );
+
+        // address tokens and VBO index (Write)
         item_idx_t *token = &page->item[i].token  [0];
         ivec2      *t_idx = &page->item[i].token_i[0];
 
+        vec4 white = (vec4) ( 1.f ),
+             color = (vec4) { .7, .7, .8, 1. };
+        // lines counter
         count = 0;
         for(int j = 0; j < NUM_OF_USER_TOKENS; j++)
         {
@@ -202,23 +252,20 @@ page_info_t *compose_page(int page_num)
 //            printf("%d, %d: [%p]: %d\n", i, j, token[j].off, token[j].len);
             //printf("%s\n", tmp);
             texture_font_load_glyphs( curr_font, &tmp[0] );        // set textures
-            /* append to VBO */
-            vec4 white = (vec4) ( 1.f ),
-                 color = (vec4) { .7, .7, .8, 1. };
 
             /*  start indexing */
             t_idx[count].x = vector_size( page->vbo->items );
-            // same position as our rects
-            vec2 pen = { 100. + i * (100. + 2. /*border*/),
-                         200. - count * 18. },
-            // save as origin: pen will move!
-            orig   = pen;
-            // add a little offset from origin
-            pen.x += 8.;
+
+            // same position as our rects:
+            vec2 pen = { 0., count * /* down */ -18. };
+            // add item origin
+                pen += page->item[i].origin;
+            // save as new origin: pen will move!
+            vec2 no  = pen;
+            // add a little offset from new origin
+              pen.x += 8.;
 
             add_text( page->vbo, curr_font, &tmp[0], &white, &pen);
-
-            // position and index the token
 
             // switch back font
             curr_font = stock_font;
@@ -226,24 +273,28 @@ page_info_t *compose_page(int page_num)
             sprintf(&tmp[0], "%s", used_token[j]);
             // set textures
             texture_font_load_glyphs( curr_font, &tmp[0] );
-            // seek pen back to origin
-            pen    = orig;
-            // right align, related to origin
+            // seek pen back to new origin
+            pen    = no;
+            // right align, related to new origin
             pen.x -= tl;
 
             add_text( page->vbo, curr_font, &tmp[0], &color, &pen );
 
-            /* end indexing */
             t_idx[count].y = vector_size( page->vbo->items )
                            - t_idx[count].x;
             // advance
             count++;
+
         }
         page->item[i].num_of_texts = count;
     }
-    texture_font_delete( stock_font );
-    texture_font_delete( title_font );
+    //texture_font_delete( stock_font );
+    //texture_font_delete( title_font );
 
+    // todo: skip if we already cached textx!
+  if(0)//(page_num > num_of_pages)
+  {
+    //printf("to gpu!\n");
     /* discard old texture, we eventually added glyphs! */
     if(atlas->id) glDeleteTextures(1, &atlas->id), atlas->id = 0;
 
@@ -256,6 +307,11 @@ page_info_t *compose_page(int page_num)
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexImage2D   ( GL_TEXTURE_2D, 0, GL_ALPHA, atlas->width, atlas->height,
                                     0, GL_ALPHA, GL_UNSIGNED_BYTE, atlas->data );
+  }
+  else
+  { //printf("refresh_atlas\n");
+    //refresh_atlas();
+  }
     // don't leak buffer!
     //if(page->json_data) free (page->json_data);
     return page;
@@ -275,7 +331,7 @@ char *get_json_token_value(item_idx_t *item, int name)
 }
 
 // wrapper from outside
-void json_get_token_test(item_idx_t *item)
+void get_json_token_test(item_idx_t *item)
 {
     printf("%s\n", get_json_token_value(item, IMAGE));
 
@@ -291,6 +347,7 @@ void GLES2_render_page( page_info_t *page )
     // we already clean in main renderloop()!
 
     // we have indexed texts: address the index pointer
+    // address tokens and VBO index (Read)
     ivec2 *t_idx = &page->item[selected_icon].token_i[0];
 
     glUseProgram   ( shader );
@@ -315,8 +372,7 @@ void GLES2_render_page( page_info_t *page )
             vertex_buffer_render_setup( page->vbo, GL_TRIANGLES ); // start draw
             //int num_of_texts = NUM_OF_USER_TOKENS;
             for(int j=0; j < page->item[selected_icon].num_of_texts; j++)  // draw all texts
-            {
-              //printf("%d, %d %d (%d %d)\n", page_num, selected_icon, num_of_texts, t_idx[j].x, t_idx[j].y);
+            {   //printf("%d, %d %d (%d %d)\n", page_num, selected_icon, num_of_texts, t_idx[j].x, t_idx[j].y);
                 // draw just text[j]
                 // iterate each char in text[j]
                 for(int i = t_idx[j].x;
@@ -332,6 +388,201 @@ void GLES2_render_page( page_info_t *page )
     glDisable( GL_BLEND );  // Reset state back
 
     // we already swapframe in main renderloop()!
+}
+
+// reuse those
+extern  texture_font_t *sub_font;
+extern vertex_buffer_t *text_buffer[4];
+
+// ---------------------------------------------------------------- display ---
+void GLES2_render_page_v2( page_info_t *page )
+{
+    // we already clean in main renderloop()!
+
+    // do nothing if a page not exists yet...
+    if(!page) return;
+
+    // get the item index from available ones
+    int idx = // we started from page 1!!!
+             (page->page_num -1) * 8 /* ITEM_IN_A_JSON */
+            + selected_icon;
+ #if 0
+    // compute the item origin
+    vec2 origin = (vec2) //
+    {
+        100. + selected_icon * (100. + 2. /*border*/),
+        200. +          200. * (page->page_num %2 )
+    };
+    //printf("%d %d: origin (%.f, %.f)\n", idx, page->page_num %2, origin.x, origin.y);
+#endif
+
+    // XXX this is the "refresh trigger"
+    if (text_buffer[3] != NULL)
+        vertex_buffer_delete(text_buffer[3]), text_buffer[3] = NULL;
+
+    if (text_buffer[3] == NULL)
+        text_buffer[3] = vertex_buffer_new( "vertex:3f,tex_coord:2f,color:4f" );
+
+    // now prepare all the texts textures, use indexed json_data
+    int count;
+    
+      item_idx_t *token = &page->item[selected_icon].token  [0];
+      ivec2      *t_idx = &page->item[selected_icon].token_i[0];
+
+      vec4 white = (vec4) ( 1.f ),
+           color = (vec4) { .7, .7, .8, 1. };
+
+      count = 0;
+      for(int j = 0; j < NUM_OF_USER_TOKENS; j++)
+      {
+          static char tmp[256];
+          // get the indexed token value
+          snprintf(&tmp[0], token[j].len + 1, "%s", token[j].off);
+          switch(j) // print just the following:
+          {
+              case NAME:        curr_font = title_font;
+                  break;
+              case DESC: 
+              case VERSION: 
+              case REVIEWSTARS:
+              case SIZE:
+              case AUTHOR:
+              case APPTYPE:
+              case PV:
+              case RELEASEDATE: curr_font = stock_font;
+                  break;
+              case PICPATH: {
+                  if(page->item[selected_icon].texture)
+                  continue; }
+              default: continue; // skip unknown names
+          }
+//            printf("%d, %d: [%p]: %d\n", i, j, token[j].off, token[j].len);
+          //printf("%s\n", tmp);
+          texture_font_load_glyphs( curr_font, &tmp[0] );        // set textures
+          
+          // same position as our rects:
+          vec2 pen = { 0., count * /* down */ -18. };
+          // add item origin
+              pen += page->item[selected_icon].origin;
+          // save as new origin: pen will move!
+          vec2 no  = pen;
+          // add a little offset from new origin
+            pen.x += 8.;
+
+          add_text( text_buffer[3], curr_font, &tmp[0], &white, &pen);
+
+          // switch back font
+          curr_font = stock_font;
+          // print token name
+          sprintf(&tmp[0], "%s", used_token[j]);
+          // set textures
+          texture_font_load_glyphs( curr_font, &tmp[0] );
+          // seek pen back to new origin
+          pen    = no;
+          // right align, related to new origin
+          pen.x -= tl;
+
+          add_text( text_buffer[3], curr_font, &tmp[0], &color, &pen );
+          count++;
+        }
+
+    // we have indexed texts: address the index pointer
+    //ivec2 *t_idx = &page->item[selected_icon].token_i[0];
+
+    glUseProgram   ( shader );
+    // setup state
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture  ( GL_TEXTURE_2D, atlas->id ); // rebind glyph atlas
+    glDisable      ( GL_CULL_FACE );
+    glEnable       ( GL_BLEND );
+    glBlendFunc    ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    {
+        glUniform1i       ( glGetUniformLocation( shader, "texture" ),    0 );
+        glUniformMatrix4fv( glGetUniformLocation( shader, "model" ),      1, 0, model.data);
+        glUniformMatrix4fv( glGetUniformLocation( shader, "view" ),       1, 0, view.data);
+        glUniformMatrix4fv( glGetUniformLocation( shader, "projection" ), 1, 0, projection.data);
+        /* draw whole VBO (storing all added texts) */
+        vertex_buffer_render( text_buffer[3], GL_TRIANGLES ); // all vbo
+        
+    }
+    glDisable( GL_BLEND );  // Reset state back
+
+    // we already swapframe in main renderloop()!
+}
+
+void GLES2_RenderPageForItem(page_item_t *item)
+{
+    if (text_buffer[3] != NULL)
+        vertex_buffer_delete(text_buffer[3]), text_buffer[3] = NULL;
+    // we have called GLES2_InitPageForItem() in advance,
+    // font and vbo already should be already there
+    if (text_buffer[3] == NULL)
+        text_buffer[3] = vertex_buffer_new( "vertex:3f,tex_coord:2f,color:4f" );
+
+/*  item_idx_t token  [NUM_OF_USER_TOKENS]; // indexed tokens from json_data
+    ivec2      token_i[NUM_OF_USER_TOKENS]; // enough for indexing all tokens, in ft-gl VBO
+    int        num_of_texts;                // num of indexed tokens we print to screen
+    GLuint     texture;                     // the textured icon from PICPATH
+} page_item_t;
+*/
+    vec2   pen = (vec2) { 0, 500 };
+    vec4 white = (vec4) ( 1.f ),
+         color = (vec4) {  .7, .7, .8, 1. };
+
+    static char tmp[256];
+    for(int i = 0; i < NUM_OF_USER_TOKENS; i++)
+    {
+        // get the indexed token value
+        snprintf(&tmp[0], item->token[i].len + 1, "%s", item->token[i].off);
+
+        switch(i) // print just the following:
+        {
+            case NAME: 
+            case DESC: 
+            case VERSION: 
+            case REVIEWSTARS:
+            case SIZE:
+            case AUTHOR:
+            case APPTYPE:
+            case PV:
+            case RELEASEDATE:
+                break;
+            default: continue; // skip unknown names
+        }
+        //printf("%d: %s\n", i, &tmp[0]);
+
+//      texture_font_load_glyphs( font, &tmp[0] );        // set textures
+//      pen.y = 400 - font->height;  // reset pen, 1 line down
+
+        /* append to VBO */
+        pen.x  = 480.;
+        pen.y -=  28.;
+        add_text( text_buffer[3], sub_font, &tmp[0], &white, &pen);
+    }
+
+    /* texts under the app icon */
+    pen = (vec2) { 210, 260 };
+    add_text( text_buffer[3], sub_font, "Version: ", &white, &pen);
+    snprintf(&tmp[0], item->token[VERSION].len + 1, "%s", item->token[VERSION].off);
+    add_text( text_buffer[3], sub_font, &tmp[0], &white, &pen);
+    pen.x  = 210.;
+    pen.y -=  28.;
+    add_text( text_buffer[3], sub_font, "Size: ", &white, &pen);
+    snprintf(&tmp[0], item->token[SIZE].len + 1, "%s", item->token[SIZE].off);
+    add_text( text_buffer[3], sub_font, &tmp[0], &white, &pen);
+    pen.x  = 270.;
+    pen.y -=  50.;
+    add_text( text_buffer[3], sub_font, "Download", &white, &pen);
+    pen.x  = 210.;
+    pen.y -=  50.;
+    add_text( text_buffer[3], sub_font, "Playable on: ", &white, &pen);
+    snprintf(&tmp[0], item->token[PV].len + 1, "%s", item->token[PV].off);
+    add_text( text_buffer[3], sub_font, &tmp[0], &white, &pen);
+    pen.x  = 210.;
+    pen.y -=  28.;
+
+    // todo: refresh once per VBO
+    refresh_atlas();
 }
 
 
@@ -360,7 +611,7 @@ int get_json_tokens(const char *json_file)
     jsmn_init(&p);
     r = jsmn_parse(&p, json_data, strlen(json_data), t,
                              sizeof(t) / sizeof(t[0]));
-    printf("%d\n", r);
+//  printf("%d\n", r);
     if (r < 0) { printf("Failed to parse JSON: %d\n", r); return -1; }
 
     for (i = 1; i < r; i++)

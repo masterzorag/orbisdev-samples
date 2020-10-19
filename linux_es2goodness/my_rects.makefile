@@ -17,7 +17,7 @@ SRC_DIR  := $(ORBISDEV)/../orbisdev-portlibs/freetype-gl/source
 #SRC_DIR  += /home/user/Documents/orbisdev-portlibs/MiniAPI/source
 #SRC_DIR := /home/user/Documents/orbisdev-portlibs/freetype-gl/source
 SRC      := egl.c fileIO.c shader_common.c ls_dir.c demo-font.c
-SRC      += GLES2_rects.c png.c GLES2_textures.c GLES2_ani.c GLES2_scene.c
+SRC      += GLES2_rects.c png.c GLES2_textures.c GLES2_ani.c GLES2_scene.c GLES2_menu.c
 SRC      += pixelshader.c
 SRC      += jsmn.c json_simple.c
 #			/home/user/Documents/orbisdev-liborbis/source/liborbisAudio/orbisAudio.c

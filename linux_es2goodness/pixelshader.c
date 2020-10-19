@@ -11,6 +11,27 @@
 
 #include "defines.h"
 
+/* glslsandbox uniforms
+uniform float time;
+uniform vec2  resolution;
+uniform vec2  mouse;
+*/
+
+/* pixelshaders, fragment shaders */
+static const char *fs[] =
+{
+    "shaders/v3f-c4f.frag",
+    "shaders/the_shat_is_pure_#2.frag",
+    "/hostapp/assets/ps_signs.shader",
+    "shaders/iTime.frag"
+};
+
+#define NUM_OF_PROGRAMS  (sizeof(fs) / sizeof(fs[0]))
+
+/* glsl programs */
+static GLuint glsl_Program[NUM_OF_PROGRAMS];
+static GLuint curr_Program;  // the current one
+
 // ------------------------------------------------------- typedef & struct ---
 typedef struct {
     float x, y, z;    // position (3f)
@@ -18,7 +39,7 @@ typedef struct {
     float r, g, b, a; // color    (4f)
 } vertex_t;
 
-typedef  vertex_t  point_t;
+//typedef  vertex_t  point_t;
 
 // ------------------------------------------------------- global variables ---
 static vertex_buffer_t *rects_buffer;
@@ -30,19 +51,14 @@ static vec2 resolution;
 
 // from main.c
 extern double u_t;
-extern GLfloat p1_pos_x,
+extern GLfloat p1_pos_x,  // unused yet
                p1_pos_y;
 // ---------------------------------------------------------------- display ---
 void pixelshader_render( void )
 {
     glUseProgram( mz_shader );
     {
-        /* glslsandbox uniforms
-uniform float time;
-uniform vec2  resolution;
-uniform vec2  mouse;
-*/
-        // notify shader about screen size
+        // notify shader about screen size, mouse position and actual cumulative time
         glUniform2f       ( glGetUniformLocation( mz_shader, "resolution" ), resolution.x, resolution.y);
         glUniform2f       ( glGetUniformLocation( mz_shader, "mouse" ),      p1_pos_x, p1_pos_y);
         glUniform1f       ( glGetUniformLocation( mz_shader, "time" ),       u_t); // notify shader about elapsed time
@@ -50,7 +66,7 @@ uniform vec2  mouse;
         glUniformMatrix4fv( glGetUniformLocation( mz_shader, "model" ),      1, 0, model.data);
         glUniformMatrix4fv( glGetUniformLocation( mz_shader, "view" ),       1, 0, view.data);
         glUniformMatrix4fv( glGetUniformLocation( mz_shader, "projection" ), 1, 0, projection.data);
-        /* draw whole VBO item arrays */
+        // draw whole VBO items array: fullscreen rectangle
         vertex_buffer_render( rects_buffer, GL_TRIANGLES );
     }
     glUseProgram( 0 );
@@ -64,18 +80,19 @@ static void reshape(int width, int height)
 }
 
 // ------------------------------------------------------ freetype-gl shaders ---
-static GLuint CreateProgram(int program)
+static GLuint CreateProgram(int program_num)
 {
 #if 1 /* we can use OrbisGl wrappers, or MiniAPI ones */
     GLchar  *vShader = (void*) orbisFileGetFileContent( "shaders/v3f-c4f.vert" );
     GLchar  *fShader = NULL;
 
-    switch(program)
+    switch(program_num)
     {
-        case 0: fShader = (void*) orbisFileGetFileContent( "shaders/v3f-c4f.frag" );         break;
-        case 1: fShader = (void*) orbisFileGetFileContent( "shaders/mz.frag" );              break;
-        case 2: fShader = (void*) orbisFileGetFileContent( "/hostapp/assets/ps_signs.shader" ); break;
-        case 3: fShader = (void*) orbisFileGetFileContent( "shaders/iTime.frag" ); break;
+        case 0:  fShader = (void*)orbisFileGetFileContent( "shaders/v3f-c4f.frag" );             break;
+        case 1:  fShader = (void*)orbisFileGetFileContent( "shaders/the_shat_is_pure_#2.frag" ); break;
+        case 2:  fShader = (void*)orbisFileGetFileContent( "/hostapp/assets/ps_signs.shader" );  break;
+        default: fShader = (void*)orbisFileGetFileContent( "shaders/clouds.frag" );               break;
+
     }
     // use shader_common.c
     GLuint programID = BuildProgram(vShader, fShader);
@@ -85,10 +102,8 @@ static GLuint CreateProgram(int program)
     if (fShader) free(fShader), fShader = NULL;
 #endif
 
-    if (!programID) { fprintf(stderr, "program creation failed\n"); sleep(2); }
-    // feedback
-    printf( "[%s] program_id=%d (0x%08x)\n", __FUNCTION__, programID, programID);
-
+    if (!programID) { fprintf(ERROR, "program creation failed!\n"); sleep(2); }
+    
     return programID;
 }
 
@@ -119,13 +134,13 @@ void pixelshader_init( int width, int height )
     int  y1 = (int)( height );
 
 #endif
-    GLuint idx[6] = {0,1,2,  0,2,3}; // (two triangles)
-
     /* VBO is setup as: "vertex:3f, color:4f */ 
     vertex_t vtx[4] = { { x0,y0,0,  r,g,b,a },
                         { x0,y1,0,  r,g,b,a },
                         { x1,y1,0,  r,g,b,a },
                         { x1,y0,0,  r,g,b,a } };
+    // two triangles: 2 * 3 vertex
+    GLuint   idx[6] = { 0,1,2,  0,2,3 };
     vertex_buffer_push_back( rects_buffer, vtx, 4, idx, 6 );
 
 #if TEST_1
@@ -135,8 +150,9 @@ void pixelshader_init( int width, int height )
 #endif
     /* compile, link and use shader */
     /* load from file */
-    //shader    = CreateProgram(0);
-    mz_shader = CreateProgram(1);
+    mz_shader = CreateProgram(3);
+    // feedback
+    fprintf(INFO, "[%s] program_id=%d (0x%08x)\n", __FUNCTION__, mz_shader, mz_shader);
 
     mat4_set_identity( &projection );
     mat4_set_identity( &model );

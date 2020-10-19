@@ -24,14 +24,18 @@ typedef struct {
     float r, g, b, a; // color    (4f)
 } vertex_t;
 
+
+// from demo-font.c
+extern texture_atlas_t *atlas;
+
 extern int selected_icon; // from main.c
 // ------------------------------------------------------- global variables ---
 // shader and locations
 static GLuint program    = 0; // default program
 static GLuint shader_fx  = 0; // text_ani.[vf]
 static mat4   model, view, projection;
-static float  g_Time     = 0.0f;
-static GLuint g_TimeSlot = 0;
+static float  g_Time     = 0.f;
+static GLuint meta_Slot  = 0;
 // ---------------------------------------------------------------- reshape ---
 static void reshape(int width, int height)
 {
@@ -43,7 +47,8 @@ static void reshape(int width, int height)
 
 static fx_entry_t *ani;          // the fx info
 
-static vertex_buffer_t *line_buffer;
+static vertex_buffer_t *line_buffer,
+                       *text_buffer;
 
 // ---------------------------------------------------------------- display ---
 static void render_ani( int text_num, int type_num )
@@ -52,23 +57,24 @@ static void render_ani( int text_num, int type_num )
 
     //type_num = 1; // which fx_entry_t test
 
-    fx_entry_t *ani = &fx_entry[type_num];
+    fx_entry_t *ani = &fx_entry[0];
     //*         fx  = &fx_entry[0];
     //      int t_n = ani - fx;
 
     program         = shader_fx;
 #if 1
-    if(ani->fcount >= ani->life) // looping ani_state, foreach text
+    if(ani->t_now >= ani->t_life) // looping ani_state
     {
         switch(ani->status) // setup for next fx
         {
-            case ANI_CLOSED : ani->status = ANI_IN;      ani->life  =  30.; break;
-            case ANI_IN     : ani->status = ANI_DEFAULT; ani->life  = 240.; break;
-            case ANI_DEFAULT: ani->status = ANI_OUT;     ani->life  =  30.; break;
-            case ANI_OUT    : ani->status = ANI_CLOSED;  ani->life  =  60.; break;
+            case ANI_CLOSED :  ani->status = ANI_IN,      ani->t_life  =   .5;  break;
+            case ANI_IN     :  ani->status = ANI_DEFAULT, ani->t_life  =  3. ;  break;
+            case ANI_DEFAULT:  ani->status = ANI_OUT,     ani->t_life  =   .5;  break;
+            case ANI_OUT    :  ani->status = ANI_CLOSED,  ani->t_life  =  2. ;  break;
             /* CLOSED reached: switch text! */   //selected  +=   0 ; break;
         }
         ani->fcount = 0; // reset framecount
+        ani->t_now  = 0.f;
     }
 #endif
 /*
@@ -80,27 +86,27 @@ static void render_ani( int text_num, int type_num )
                      fmod(ani->status /10. + type_num /100., .02));
 */
     glUseProgram   ( program );
-//    glActiveTexture( GL_TEXTURE0 );
-//    glBindTexture  ( GL_TEXTURE_2D, atlas->id ); // rebind glyph atlas
-    glDisable      ( GL_CULL_FACE );
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture  ( GL_TEXTURE_2D, atlas->id ); // rebind glyph atlas
     glEnable       ( GL_BLEND );
     glBlendFunc    ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glDisable      ( GL_CULL_FACE );
     {
-//        glUniform1i       ( glGetUniformLocation( program, "texture" ),    0 );
+        glUniform1i       ( glGetUniformLocation( program, "texture" ),    0 );
         glUniformMatrix4fv( glGetUniformLocation( program, "model" ),      1, 0, model.data);
         glUniformMatrix4fv( glGetUniformLocation( program, "view" ),       1, 0, view.data);
         glUniformMatrix4fv( glGetUniformLocation( program, "projection" ), 1, 0, projection.data);
         glUniform4f       ( glGetUniformLocation( program, "meta"), 
-                ani->fcount,
+                ani->t_now,
                 ani->status /10., // we use float on SL, switching fx state
-                ani->life,
+                ani->t_life,
                 type_num    /10.);
 #if 1
         if(1) /* draw whole VBO (storing all added texts) */
         {
             /* draw whole VBO item arrays */
-            vertex_buffer_render( line_buffer,  GL_LINES );
-           //vertex_buffer_render( buffer, GL_TRIANGLES );
+            vertex_buffer_render( line_buffer, GL_LINES );
+            vertex_buffer_render( text_buffer, GL_TRIANGLES );
         }
 #else
         else /* draw a range/selection of indeces (= glyph) */
@@ -153,30 +159,26 @@ void GLES2_ani_test( fx_entry_t *_ani )
 // --------------------------------------------------------- custom shaders ---
 static GLuint CreateProgram( void )
 {
-#if 1 /* we can use OrbisGl wrappers, or MiniAPI ones */
+    /* we can use OrbisGl wrappers, or MiniAPI ones */
     const GLchar  *vShader = (void*) orbisFileGetFileContent( "shaders/ani.vert" );
     const GLchar  *fShader = (void*) orbisFileGetFileContent( "shaders/ani.frag" );
           GLuint programID = BuildProgram(vShader, fShader); // shader_common.c
 
-#endif /* else,
-    include and links against MiniAPI library!
-    programID = miniCompileShaders(s_vertex_shader_code, s_fragment_shader_code);
-#endif */
     if (!programID) { printf( "failed!\n"); }
     // feedback
-    printf( "program_id=%d (0x%08x)\n", programID, programID);
+    printf( "ani program_id=%d (0x%08x)\n", programID, programID);
     return programID;
 }
 
 
 // libfreetype-gl pass last composed Text_Length in pixel, we use to align text!
-
+extern float tl;
+static texture_font_t *font = NULL;
 // ------------------------------------------------------------------- main ---
 void GLES2_ani_init(int width, int height)
 {
-    line_buffer  = vertex_buffer_new( "vertex:3f,color:4f" );
-
-    vec4 color = { 1., 1., 1., 1. };
+    vec4 color  = { 1., 1., 1., 1. };
+    line_buffer = vertex_buffer_new( "vertex:3f,color:4f" );
 
 #if 0 // rects
     
@@ -269,33 +271,61 @@ for (int i = 0; i < 10; ++i)
     vertex_buffer_push_back( line_buffer, vertices, 26, indices, 26 );
 #endif
 
-		/* shader program is custom, so
-       compile, link and use shader */
+#if 1 // text_ani
+    text_buffer = vertex_buffer_new( "vertex:3f,tex_coord:2f,color:4f" );
+
+    font = texture_font_new_from_memory(atlas, 64, _hostapp_fonts_zrnic_rg_ttf,
+                                                   _hostapp_fonts_zrnic_rg_ttf_len);
+    // print something
+    char *s = "test ani";   // set text
+
+    texture_font_load_glyphs( font, s );        // set textures
+    pen.x = (width - tl) /2;                    // use Text_Length to align pen.x
+    pen.y = 100;
+    // use outline
+    font->rendermode        = RENDER_OUTLINE_EDGE;
+    font->outline_thickness = 1.f;
+
+    add_text( text_buffer, font, s, &color, &pen );  // set vertexes
+
+    texture_font_delete( font );
+
+    refresh_atlas();
+#endif
+
+    /* shader program is custom, so
+    compile, link and use shader */
     shader_fx = CreateProgram();
 
     if(!shader_fx) { printf("program creation failed\n"); }
 
     /* init ani effect */
-    ani = &fx_entry[0];
+    ani         = &fx_entry[0];
     ani->status = ANI_CLOSED,
-    ani->fcount =  0;     // framecount
-    ani->life   = 20.f;   // duration in frames
+    ani->fcount = 0;    // framecount
+    ani->t_now  = 0.f;  // set actual time
+    ani->t_life = 2.f;  // duration in frames
 
     mat4_set_identity( &projection );
     mat4_set_identity( &model );
     mat4_set_identity( &view );
     // attach our "custom infos"
-    g_TimeSlot = glGetUniformLocation(shader_fx, "meta");
+    meta_Slot = glGetUniformLocation(shader_fx, "meta");
 
     reshape(width, height);
 }
 
-void GLES2_ani_update(double elapsedTime)
+void GLES2_ani_update(double now)
 {
-    g_Time += (float)(elapsedTime * 1.f);  // adjust time
+    //g_Time += (float)(now * 1.f);  // adjust time
     //glUseProgram(shader_fx);
-//printf("%d:%.4f %d %4G %4f\n", g_TimeSlot, g_Time, ani_status, elapsedTime, elapsedTime);
-    //glUniform1f(g_TimeSlot, g_Time); // notify shader about elapsed time
+    ani->t_now += now - g_Time;
+    g_Time      = now;
+
+
+//printf("%d:%.4f %d:\t%4f %4f\n", meta_Slot, g_Time,     ani->status, now, ani->t_now);
+
+    //glUniform1f(meta_Slot, g_Time); // notify shader about elapsed time
 }
 
 void GLES2_ani_fini( void )

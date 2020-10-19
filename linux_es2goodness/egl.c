@@ -203,12 +203,13 @@ void render()
     //ORBIS_RenderFillRects_rndr();
 #endif
 
-#if defined FT_DEMO
-    render_text();   // freetype demo-font.c, renders text just from init_
 
 #if defined ES_UI
     GLES2_scene_render();
 #endif
+
+#if defined FT_DEMO
+    //render_text();   // freetype demo-font.c, renders text just from init_
 
     #if defined TEXT_ANI
     es2rndr_text_ext(NULL);  // freetype text_ani.c, shared VBO, draw just indexed texts
@@ -250,8 +251,8 @@ extern int keyPressed;
 bool quit = false;
 
 const float
-      window_width  = 1024.0,
-      window_height =  480.0;
+      window_width  = 1280.0,
+      window_height =  720.0;
 
 uint8_t updateController(uint8_t *p)
 {
@@ -339,14 +340,18 @@ uint8_t updateController(uint8_t *p)
                 case 53: printf("Cross pressed\n");
                     break;
                 case 28: printf("Triangle pressed\n"); 
-                    ls_dir("./");
+                    //ls_dir("./");
                     //get_item_entries("./");
                     break;
                 case 37: /* L-CTRL */
                     printf("L1 pressed\n");   
+                    GLES2_layout16_from_json(3);
                     break;
                 case 64: /* L_ALT */
                     printf("R1 pressed\n");
+                    break;
+                case 32: /* Option */
+                    printf("Option pressed\n");
                     break;
                 case 24: /* q */ quit = true; break;
                 default:  break;
@@ -584,7 +589,7 @@ int main(int argc, char **argv)
         render(); // now we finally put something on the screen
  
         // timing, for fps
-        if ( ++num_frames % 100 == 0 ) {
+        if ( ++num_frames % 2000 == 0 ) {
             gettimeofday( &t2, NULL );
             dt = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6;
             printf("fps: %f, %.4f seconds\n", (float)(num_frames / dt), dt);

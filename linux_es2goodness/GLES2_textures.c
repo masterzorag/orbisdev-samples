@@ -16,6 +16,8 @@
 //#define  
 #include "defines.h"
 
+#include "json.h"
+
 #include "icons_shaders.h"
 /*
     we setup two SL programs:
@@ -30,13 +32,12 @@ enum GLSL_programs
 };
 
 /* shared programs */
-       GLuint glsl_Program[NUM_OF_PROGRAMS];
+static GLuint glsl_Program[NUM_OF_PROGRAMS];
 static GLuint curr_Program;  // the current one
 
-static GLuint texture[NUM_OF_TEXTURES];
+//static GLuint texture[NUM_OF_TEXTURES];
 //static GLuint buffer [NUM_OF_TEXTURES];
 #define BUFFER_OFFSET(i) ((void*)(i))
-
 
 
 // the pngs we turn into VBOs + textures
@@ -56,7 +57,8 @@ char *pngs[NUM_OF_TEXTURES] =
 static vec4 rects[NUM_OF_TEXTURES];
 
 // the png we apply glowing effect by switching shader
-extern int selected_icon;
+extern int    selected_icon;
+extern ivec4  menu_pos;
 
 // shaders locations
 static GLint a_position_location;
@@ -146,7 +148,7 @@ void on_GLES2_Update(double time)
 }
 
 
-void on_GLES2_Render_icon(GLuint texture, int num) // which texture to draw
+void on_GLES2_Render_icon(GLuint texture, int num, vec4 *frect) // which texture to draw
 {
     // we already clean
 
@@ -168,8 +170,9 @@ void on_GLES2_Render_icon(GLuint texture, int num) // which texture to draw
     glUniform1i    (u_texture_unit_location, num);  // tell to shader
 
     // setup positions
-    const vec4 *rect = &rects[num];
-
+    //const vec4 *rect = &rects[num];
+    const vec4 *rect = frect;
+/*
     vec4 r;// = (vec4) { .2, .2, .3, .3 };
     if(num == selected_icon)
     {
@@ -177,6 +180,7 @@ void on_GLES2_Render_icon(GLuint texture, int num) // which texture to draw
         //r   *= 1.15;
         rect = &r;
     }
+*/
     GLfloat  xMin = rect->x,  xMax = rect->z,
              yMin = rect->y,  yMax = rect->w;
     //printf("%d: %.f %.f %.f %.f\n", num, xMin, xMax, yMin, yMax);
@@ -185,10 +189,10 @@ void on_GLES2_Render_icon(GLuint texture, int num) // which texture to draw
                             xMin, yMax,   // BTLF
                             xMax, yMin,   // BTRG
                             xMax, yMax }; // TPRG
-    const float v_tex[] = { 0.f,  0.f,    // TPLF
-                            0.f,  1.f,    // BTLF
-                            1.f,  0.f,    // BTRG
-                            1.f,  1.f  }; // TPRG
+    const float v_tex[] = { 0.f,  1.f,    // TPLF
+                            0.f,  0.f,    // BTLF
+                            1.f,  1.f,    // BTRG
+                            1.f,  0.f  }; // TPRG
     // setup attr
     glVertexAttribPointer(a_position_location,
         2, GL_FLOAT, GL_FALSE, 0, v_pos);
@@ -208,8 +212,39 @@ void on_GLES2_Render_icon(GLuint texture, int num) // which texture to draw
     // we already flip/swap
 }
 
-void on_GLES2_Render_box(int num)
+// UI: pngs
+static vec4 selection_box;
+
+void on_GLES2_Render_icons(page_info_t *row)
 {
-    // pass the selected
-    ORBIS_RenderDrawBox(&rects[num]);
+    if(!row) return;
+
+    vec4 r;
+    vec2 p, s;
+    for(int i = 0; i < NUM_OF_TEXTURES; i++)
+    {
+#if 1
+       // position, size in px
+        p = row->item[i].origin;
+        s = (vec2){ 128., 128. };
+        // turn size into the second point
+        s += p;
+        // compute the normalized frect
+        r.xy = px_pos_to_normalized(&p);
+        r.zw = px_pos_to_normalized(&s);
+        // save the currently selected frect!
+        if(i == selected_icon
+        &&(((row->page_num -1) %2) == menu_pos.y %2)
+        ) selection_box = r;
+        // render texture using normalized frect
+        on_GLES2_Render_icon(row->item[i].texture, i, &r);
+#else
+        on_GLES2_Render_icon(row->item[i].texture, i, row->item[i].frect);
+#endif
+    }
+}
+
+void on_GLES2_Render_box(vec4 *frect)
+{
+    ORBIS_RenderDrawBox(&selection_box);
 }

@@ -19,7 +19,17 @@ uniform mat4 model;
 uniform mat4 view; 
 uniform mat4 projection; 
 uniform vec4 meta;     // ( g_Time, ani_status, TOTAL_ANI_FRAMES, ftype_num )
+/*
+    x: g_Time
+    y: ani_status
+    z: t_life
+    w: ani_type
 
+    ani->t_now,
+    ani->status /10., // we use float on SL, switching fx state
+    ani->t_life,
+    type_num    /10.);
+*/
 attribute vec3 vertex; 
 attribute vec2 tex_coord; 
 attribute vec4 color; 
@@ -27,7 +37,7 @@ attribute vec4 color;
 varying vec2  vTexCoord; 
 varying vec4  fragColor;
 varying float frame;
-// info(frame, TOTAL_ANI_FRAMES, iTime, state)
+// info(frame, t_life, iTime, state)
 // varying vec4 unused;
 
 float t(float a)
@@ -59,16 +69,18 @@ void main(void)
     // follow ani_status
     if(meta.y >= .3) // OUT
     { 
-        if( meta.w  < .2 ) p1   -= step * frame; // move (L) from final position
-        if( meta.w == .2 ) p1   += step * frame /2.; // move (U) from final position
-      //if( meta.w == .1 ) p1.y -= step.y * frame;
+//        if( meta.w >= .1 ) 
+        p1   -= step * frame; // move (L) from final position
+  //      if( meta.w >= .2 ) p1   += step * frame /2.; // move (U) from final position
+        //if( meta.w >= .3 ) p1.y -= step.y * frame;
+        
         gl_Position = p1; return;
     }
     if(meta.y >= .2) // DEFAULT
     { 
         if( meta.w == .1 ) { p1   +=     cos(frame * .2) * .01;  }
-        if( meta.w == .2 ) { p1.y += abs(sin(frame * .1) * .1 ); }
-        if( meta.w == .3 ) { p1.w -=     cos(frame * .1) * .005; }
+        if( meta.w == .2 ) { p1.y += abs(sin(frame * .2) * .1 ); }
+        if( meta.w == .3 ) { p1.w +=     cos(frame * .2) * .05; }
 
         gl_Position = p1; return; // reflect same ft-gl program default
     }

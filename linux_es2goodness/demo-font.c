@@ -275,7 +275,7 @@ int es2init_text (int width, int height)
     size_t h; // text size in pt
 
     /* init page: compose all texts to draw */
-    atlas  = texture_atlas_new( 512, 512, 1 );
+    atlas  = texture_atlas_new( 1024, 1024, 1 );
 
     /* load .ttf in memory */
 //  void *ttf = orbisFileGetFileContent( "/hostapp/fonts/zrnic_rg.ttf" );

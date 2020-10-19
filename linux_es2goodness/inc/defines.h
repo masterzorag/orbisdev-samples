@@ -165,6 +165,15 @@ typedef struct
 } item_idx_t;
 
 
+enum views
+{
+    ON_TEST_ANI = -1,
+    ON_MAIN_SCREEN,
+    ON_SUBMENU,
+    ON_SUBMENU_2,
+    ON_ITEM_PAGE
+};
+
 // from GLES2_ani.c
 void GLES2_ani_init  (int width, int height);
 void GLES2_ani_update(double time);
@@ -175,8 +184,8 @@ void GLES2_ani_fini  ( void );
 void on_GLES2_Init_icons(int view_w, int view_h);
 void on_GLES2_Update(double time);
 //void on_GLES2_Render_icons(int num);
-void on_GLES2_Render_icon(GLuint texture, int num);
-void on_GLES2_Render_box(int num);
+void on_GLES2_Render_icon(GLuint texture, int num, vec4 *frect);
+void on_GLES2_Render_box(vec4 *frect);
 void on_GLES2_Final(void);
 
 
